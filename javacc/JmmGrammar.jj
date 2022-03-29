@@ -5,35 +5,108 @@ SMART_NODE_CREATION=false;
 SKIP : " " | "\t" | "\r" | "\n";
 
 TOKEN :
+    // arithmetic
 	< PLUS : "+" > |
 	< MINUS : "-" > |
 	< TIMES : "*" > |
 	< DIVIDE : "/" > |
+
+	// other symbols
+	< DOT : "." > |
+	< COMMA : "," > |
+	< SEMICOLON : ";" > |
+	< EQUALS : "=" > |
+	< AND : "&&" > |
+	< LT : "<" > |
 	< OPEN_PAREN : "(" > |
-	< CLOSE_PAREN : ")" > |
-	< INTEGER : (["0" - "9"])+ >
+    < CLOSE_PAREN : ")" > |
+    < OPEN_CURL : "{" > |
+    < CLOSE_CURL : "}" > |
+    < OPEN_SQUARE : "[" > |
+    < CLOSE_SQUARE : "]" > |
+
+	// keywords
+	< IMPORT : "import" > |
+	< CLASS : "class" > |
+	< EXTENDS : "extends" > |
+	< PUBLIC : "public" > |
+    < STATIC : "static" > |
+    < VOID : "void" > |
+    < MAIN : "main" > |
+    < STRING : "String" > |
+	< RETURN : "return" > |
+	< INT : "int" > |
+	< BOOLEAN : "boolean" > |
+	< IF : "if" > |
+	< ELSE : "else" > |
+	< WHILE : "while" > |
+    < LENGTH : "length" > |
+    < TRUE : "true" > |
+    < FALSE : "false" > |
+    < NOT : "not" > |
+    < THIS : "this" > |
+    < NEW : "new" > |
+
+	// last possibilities
+	< INTEGER : (["0" - "9"])+ > |
+	< IDENT : ["A" - "Z","a" - "z","_"](["A" - "Z","a" - "z","_","0" - "9"])* >
 ;
 
-Start : AdditiveExpression <EOF> ;
+Program : (ImportDeclaration)* ClassDeclaration <EOF> ;
 
-AdditiveExpression :
-	MultiplicativeExpression
-	(
-		(< PLUS > | < MINUS >)
-		MultiplicativeExpression
-	)?
-;
+ImportDeclaration : <IMPORT> Identifier (<DOT> Identifier)* <SEMICOLON> ;
 
-MultiplicativeExpression :
-	Factor
-	(
-		(< TIMES > | < DIVIDE >)
-		Factor
-	)?
-;
+ClassDeclaration : <CLASS> Identifier (<EXTENDS> Identifier)?
+                   <OPEN_CURL> (VarDeclaration)* (<PUBLIC> MethodDeclaration)* <CLOSE_CURL> ;  // class declaration
 
-Factor :
-	< INTEGER > |
-	< MINUS> Factor |
-	< OPEN_PAREN > AdditiveExpression < CLOSE_PAREN >
-;
+VarDeclaration : Type Identifier <SEMICOLON> ;
+
+MethodDeclaration : <STATIC> <VOID> <MAIN> <OPEN_PAREN> <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> Identifier <CLOSE_PAREN>  // psvm
+                    <OPEN_CURL> (VarDeclaration)* (Statement)* <CLOSE_CURL> |
+                    Type Identifier <OPEN_PAREN> ( Type Identifier ( <COMMA> Type Identifier )* )? <CLOSE_PAREN>
+                    <OPEN_CURL> (VarDeclaration)* (Statement)*
+                    <RETURN> Expression <SEMICOLON> <CLOSE_CURL> ;                                                      // generic method declaration
+
+
+Type : <INT> <OPEN_SQUARE> <CLOSE_SQUARE> |  //spaghettios
+       <BOOLEAN> |
+       <INT> |
+       Identifier ;
+
+Statement : <OPEN_CURL> (Statement)* <CLOSE_CURL> |
+            <IF> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement <ELSE> Statement |  // if then else
+            <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement |                // while loop
+            Expression <SEMICOLON> |
+            Assignment ;
+
+Assignment : Identifier (Indexing)? <EQUALS> Expression <SEMICOLON> ;
+
+Expression : AndExpression ;
+
+Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
+
+
+
+AndExpression : CompareExpression (<AND> CompareExpression)* ;
+
+CompareExpression : AdditiveExpression (<LT> AdditiveExpression)* ;
+
+AdditiveExpression : MultiplicativeExpression ( (<PLUS> | <MINUS>) MultiplicativeExpression )* ;
+
+MultiplicativeExpression : AccessExpression ( (<TIMES> | <DIVIDE>) AccessExpression )* ;
+
+AccessExpression : Factor (Indexing | <DOT> CallExpression) ;
+
+CallExpression : <LENGTH> |
+                 Identifier <OPEN_PAREN> (Expression (<COMMA> Expression)*)? <CLOSE_PAREN> ;  // method call
+
+Factor : <INTEGER> | <TRUE> | <FALSE> | <THIS> |
+        <NOT> Factor |
+        <NEW> NewExpression |
+        <OPEN_PAREN> AndExpression <CLOSE_PAREN> |
+        Identifier ;
+
+NewExpression : <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> |  // create int array
+                Identifier <OPEN_PAREN> <CLOSE_PAREN> ;          // Identifier constructor call
+
+Identifier : <IDENT> ;
