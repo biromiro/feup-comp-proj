@@ -57,32 +57,46 @@ TOKEN :
 
 Program : (ImportDeclaration)* ClassDeclaration <EOF> ;
 
-ImportDeclaration : <IMPORT> Identifier (<DOT> Identifier)* <SEMICOLON> ;
+ImportDeclaration : <IMPORT> ImportPath (<DOT> ImportPath)* <SEMICOLON> ;
 
-ClassDeclaration : <CLASS> Identifier (<EXTENDS> Identifier)?
-                   <OPEN_CURL> (VarDeclaration)* (<PUBLIC> MethodDeclaration)* <CLOSE_CURL> ;
+ImportPath: <IDENT> ({jjtThis.put("path", lastConsumedToken.getImage()); }) ;
 
-VarDeclaration : SCAN 2 Type Identifier <SEMICOLON> ;
+ClassDeclaration : <CLASS> <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
+                   (<EXTENDS> <IDENT> ({jjtThis.put("extends", lastConsumedToken.getImage()); }))?
+                   <OPEN_CURL> (VarDeclaration)* (<PUBLIC> MainOrRegularMethod)* <CLOSE_CURL> ;
 
-MethodDeclaration #void: MainMethod | RegularMethod;
+VarDeclaration : SCAN 2
+                 Type
+                 <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
+                 <SEMICOLON> ;
 
-MainMethod: <STATIC> <VOID> <MAIN> <OPEN_PAREN> StringArg <CLOSE_PAREN>
-            <OPEN_CURL> MethodContent <CLOSE_CURL>;
+MainOrRegularMethod #void: MainMethodDef | MethodDef;
 
-RegularMethod: Type Identifier <OPEN_PAREN> (Args)? <CLOSE_PAREN>
-               <OPEN_CURL> MethodContent
-               <RETURN> Expression <SEMICOLON> <CLOSE_CURL> ;
+MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter #Parameters <CLOSE_PAREN>
+            <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
-StringArg: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> Identifier;
+CmdArgsParameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE>
+                  <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
 
-Args: Type Identifier ( <COMMA> Type Identifier )* ;
+MethodDef: Type
+               <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
+               <OPEN_PAREN> (Parameters)? <CLOSE_PAREN>
+               <OPEN_CURL> (MethodContent ReturnStatement) #MethodBody <CLOSE_CURL>;
+
+Parameters: Parameter ( <COMMA> Parameter )* ;
+
+Parameter: Type
+           <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
+
+ReturnStatement: <RETURN> Expression <SEMICOLON>;
 
 MethodContent #void: (VarDeclaration)* (Statement)*;
 
-Type #void: <INT> (<OPEN_SQUARE> <CLOSE_SQUARE>)? |
-            <BOOLEAN> |
-            <STRING> |
-            Identifier ;
+Type: <INT> ({jjtThis.put("type", "int"); })
+            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int array"); }))? |
+            <BOOLEAN> ({jjtThis.put("type", "boolean"); }) |
+            <STRING> ({jjtThis.put("type", "string"); }) |
+            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); });
 
 Statement #void: ScopeStatement |
                  IfElseStatement |
@@ -92,11 +106,14 @@ Statement #void: ScopeStatement |
 
 ScopeStatement: <OPEN_CURL> (Statement)* <CLOSE_CURL>;
 
-IfElseStatement: <IF> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement <ELSE> Statement;
+IfElseStatement: <IF> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #ThenCase <ELSE> Statement #ElseCase;
 
-WhileStatement: <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement;
+WhileStatement: <WHILE> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #LoopedStatement;
 
-Assignment : Identifier (Indexing)? <EQUALS> Expression <SEMICOLON> ;
+Assignment : Variable #LHS <EQUALS> Expression #RHS <SEMICOLON> ;
+
+Variable: <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
+          (Indexing)?;
 
 Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
@@ -108,32 +125,51 @@ CompareExpression #void: AdditiveExpression (<LT> AdditiveExpression)* ;
 
 AdditiveExpression #void: MultiplicativeExpression ( (<PLUS> | <MINUS>) MultiplicativeExpression )* ;
 
-MultiplicativeExpression #void: AccessExpression ( (<TIMES> | <DIVIDE>) AccessExpression )* ;
+MultiplicativeExpression #void: UnaryExpression ( (<TIMES> | <DIVIDE>) UnaryExpression )* ;
 
-AccessExpression #void: Factor (Indexing | <DOT> CallExpression)? ;
+/*
+AndExpression #void: CompareExpression ((<AND> CompareExpression ({jjtThis.put("op", "AND"); })) #BinOp(2))* ;
 
-CallExpression #void: LengthCall | MethodCall;
+CompareExpression #void: AdditiveExpression ((<LT> AdditiveExpression ({jjtThis.put("op", "LT"); })) #BinOp(2))* ;
 
-LengthCall: <LENGTH>;
+AdditiveExpression #void: MultiplicativeExpression (
+                            (<PLUS> MultiplicativeExpression ({jjtThis.put("ADD", "+"); })) #BinOp(2) |
+                            (<MINUS> MultiplicativeExpression ({jjtThis.put("SUB", "-"); })) #BinOp(2) )* ;
 
-MethodCall: Identifier <OPEN_PAREN> (Expression (<COMMA> Expression)*)? <CLOSE_PAREN> ;
+MultiplicativeExpression #void: UnaryExpression (
+                            (<TIMES> UnaryExpression ({jjtThis.put("op", "MUL"); })) #BinOp(2) |
+                            (<DIVIDE> UnaryExpression ({jjtThis.put("op", "DIV"); })) #BinOp(2) )* ;
+*/
+UnaryExpression #void: NotExpression |
+                 <NEW> NewExpression |
+                 AccessExpression;
 
-Factor #void: <INTEGER> | <TRUE> | <FALSE> | <THIS> |
-        <NOT> Factor |
-        <NEW> NewExpression |
-        <OPEN_PAREN> AndExpression <CLOSE_PAREN> |
-        Identifier ;
+NotExpression: <NOT> AccessExpression;
 
 NewExpression #void: NewIntArray | NewObject ;
 
 NewIntArray: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
-NewObject: Identifier <OPEN_PAREN> <CLOSE_PAREN>;
+NewObject: <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
+            <OPEN_PAREN> <CLOSE_PAREN>;
 
-Identifier:  <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) ;
+AccessExpression #void: Operand (Indexing | <DOT> CallExpression)? ;
+
+CallExpression #void: LengthCall | MethodCall;
+
+LengthCall: <LENGTH>;
+
+MethodCall: <IDENT> ({jjtThis.put("methodname", lastConsumedToken.getImage()); })
+            <OPEN_PAREN> (MethodArguments)? <CLOSE_PAREN> ;
+
+MethodArguments #Arguments: Expression (<COMMA> Expression)*;
+
+Operand #void: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); }) #IntegerLiteral
+        | <TRUE> #TrueKeyword | <FALSE> #FalseKeyword | <THIS> #ThisKeyword |
+        <OPEN_PAREN> Expression <CLOSE_PAREN> |
+        <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) #Identifier;
 
 // Injections for the implementation of JmmNode
-// Since this is injected into BaseNode, it affects only non-terminals
 INJECT BaseNode :
 		import pt.up.fe.comp.jmm.ast.JmmNode;
 		import pt.up.fe.comp.jmm.ast.AJmmNode;

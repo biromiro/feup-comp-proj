@@ -32,7 +32,7 @@ public class SimpleParser implements JmmParser {
         try {
 
             JmmGrammarParser parser = new JmmGrammarParser(SpecsIo.toInputStream(jmmCode));
-            SpecsSystem.invoke(parser, startingRule); //get cause
+            SpecsSystem.invoke(parser, startingRule); // TODO get cause
 
             Node root = parser.rootNode();
             if (root == null) {
