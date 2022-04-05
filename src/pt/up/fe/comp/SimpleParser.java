@@ -32,14 +32,14 @@ public class SimpleParser implements JmmParser {
         try {
 
             JmmGrammarParser parser = new JmmGrammarParser(SpecsIo.toInputStream(jmmCode));
-            SpecsSystem.invoke(parser, startingRule);
+            SpecsSystem.invoke(parser, startingRule); //get cause
 
             Node root = parser.rootNode();
             if (root == null) {
                 throw new ParseException(parser, "Parsing problems, root is null");
             }
 
-            root.dump("");
+            System.out.println(((JmmNode) root).sanitize().toTree());
 
             if (!(root instanceof JmmNode)) {
                 return JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,

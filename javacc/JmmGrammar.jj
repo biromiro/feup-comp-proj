@@ -1,6 +1,7 @@
 PARSER_PACKAGE=pt.up.fe.comp;
 PARSER_CLASS=JmmGrammarParser;
 SMART_NODE_CREATION=false;
+TOKENS_ARE_NODES = false;
 
 SKIP : " " | "\t" | "\r" | "\n" |
         <"//" (~["\n", "\r"])* ("\n" | "\r")> |
@@ -59,34 +60,47 @@ Program : (ImportDeclaration)* ClassDeclaration <EOF> ;
 ImportDeclaration : <IMPORT> Identifier (<DOT> Identifier)* <SEMICOLON> ;
 
 ClassDeclaration : <CLASS> Identifier (<EXTENDS> Identifier)?
-                   <OPEN_CURL> (VarDeclaration)* (<PUBLIC> MethodDeclaration)* <CLOSE_CURL> ;  // class declaration
+                   <OPEN_CURL> (VarDeclaration)* (<PUBLIC> MethodDeclaration)* <CLOSE_CURL> ;
 
 VarDeclaration : SCAN 2 Type Identifier <SEMICOLON> ;
 
-MethodDeclaration : <STATIC> <VOID> <MAIN> <OPEN_PAREN> <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> Identifier <CLOSE_PAREN>  // psvm
-                    <OPEN_CURL> MethodContent <CLOSE_CURL> |
-                    Type Identifier <OPEN_PAREN> ( Type Identifier ( <COMMA> Type Identifier )* )? <CLOSE_PAREN>
-                    <OPEN_CURL> MethodContent
-                    <RETURN> Expression <SEMICOLON> <CLOSE_CURL> ;                                                      // generic method declaration
+MethodDeclaration #void: MainMethod | RegularMethod;
+
+MainMethod: <STATIC> <VOID> <MAIN> <OPEN_PAREN> StringArg <CLOSE_PAREN>
+            <OPEN_CURL> MethodContent <CLOSE_CURL>;
+
+RegularMethod: Type Identifier <OPEN_PAREN> (Args)? <CLOSE_PAREN>
+               <OPEN_CURL> MethodContent
+               <RETURN> Expression <SEMICOLON> <CLOSE_CURL> ;
+
+StringArg: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> Identifier;
+
+Args: Type Identifier ( <COMMA> Type Identifier )* ;
 
 MethodContent #void: (VarDeclaration)* (Statement)*;
 
-Type #void: <INT> (<OPEN_SQUARE> <CLOSE_SQUARE>)? |  //spaghettios
-       <BOOLEAN> |
-       <STRING> |
-       Identifier ;
+Type #void: <INT> (<OPEN_SQUARE> <CLOSE_SQUARE>)? |
+            <BOOLEAN> |
+            <STRING> |
+            Identifier ;
 
-Statement : <OPEN_CURL> (Statement)* <CLOSE_CURL> |
-            <IF> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement <ELSE> Statement |  // if then else
-            <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement |                // while loop
-            SCAN 2 Assignment |
-            Expression <SEMICOLON>;
+Statement #void: ScopeStatement |
+                 IfElseStatement |
+                 WhileStatement |
+                 SCAN 2 Assignment |
+                 Expression <SEMICOLON>;
+
+ScopeStatement: <OPEN_CURL> (Statement)* <CLOSE_CURL>;
+
+IfElseStatement: <IF> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement <ELSE> Statement;
+
+WhileStatement: <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement;
 
 Assignment : Identifier (Indexing)? <EQUALS> Expression <SEMICOLON> ;
 
-Expression : AndExpression ;
+Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
-Indexing #void: <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
+Expression #void: AndExpression ;
 
 AndExpression #void: CompareExpression (<AND> CompareExpression)* ;
 
@@ -98,8 +112,11 @@ MultiplicativeExpression #void: AccessExpression ( (<TIMES> | <DIVIDE>) AccessEx
 
 AccessExpression #void: Factor (Indexing | <DOT> CallExpression)? ;
 
-CallExpression #void: <LENGTH> |
-                 Identifier <OPEN_PAREN> (Expression (<COMMA> Expression)*)? <CLOSE_PAREN> ;  // method call
+CallExpression #void: LengthCall | MethodCall;
+
+LengthCall: <LENGTH>;
+
+MethodCall: Identifier <OPEN_PAREN> (Expression (<COMMA> Expression)*)? <CLOSE_PAREN> ;
 
 Factor #void: <INTEGER> | <TRUE> | <FALSE> | <THIS> |
         <NOT> Factor |
@@ -107,7 +124,38 @@ Factor #void: <INTEGER> | <TRUE> | <FALSE> | <THIS> |
         <OPEN_PAREN> AndExpression <CLOSE_PAREN> |
         Identifier ;
 
-NewExpression #void: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> |  // create int array
-                Identifier <OPEN_PAREN> <CLOSE_PAREN> ;          // Identifier constructor call
+NewExpression #void: NewIntArray | NewObject ;
 
-Identifier : <IDENT> ;
+NewIntArray: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
+
+NewObject: Identifier <OPEN_PAREN> <CLOSE_PAREN>;
+
+Identifier:  <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) ;
+
+// Injections for the implementation of JmmNode
+// Since this is injected into BaseNode, it affects only non-terminals
+INJECT BaseNode :
+		import pt.up.fe.comp.jmm.ast.JmmNode;
+		import pt.up.fe.comp.jmm.ast.AJmmNode;
+		import pt.up.fe.specs.util.SpecsCollections;
+		extends AJmmNode
+{
+    @Override
+    public List<JmmNode> getChildren() {
+
+        return SpecsCollections.cast(children(), JmmNode.class);
+    }
+
+    @Override
+    public void add(JmmNode child, int index) {
+
+        if (child instanceof Node) {
+
+            addChild(index, (Node) child);
+        } else {
+
+            throw new RuntimeException("Node " + child + " is not a Node.");
+        }
+
+    }
+}
