@@ -2,7 +2,9 @@ PARSER_PACKAGE=pt.up.fe.comp;
 PARSER_CLASS=JmmGrammarParser;
 SMART_NODE_CREATION=false;
 
-SKIP : " " | "\t" | "\r" | "\n";
+SKIP : " " | "\t" | "\r" | "\n" |
+        <"//" (~["\n", "\r"])* ("\n" | "\r")> |
+        <"/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">;
 
 TOKEN :
     // arithmetic
@@ -43,7 +45,7 @@ TOKEN :
     < LENGTH : "length" > |
     < TRUE : "true" > |
     < FALSE : "false" > |
-    < NOT : "not" > |
+    < NOT : "!" > |
     < THIS : "this" > |
     < NEW : "new" > |
 
@@ -59,54 +61,53 @@ ImportDeclaration : <IMPORT> Identifier (<DOT> Identifier)* <SEMICOLON> ;
 ClassDeclaration : <CLASS> Identifier (<EXTENDS> Identifier)?
                    <OPEN_CURL> (VarDeclaration)* (<PUBLIC> MethodDeclaration)* <CLOSE_CURL> ;  // class declaration
 
-VarDeclaration : Type Identifier <SEMICOLON> ;
+VarDeclaration : SCAN 2 Type Identifier <SEMICOLON> ;
 
 MethodDeclaration : <STATIC> <VOID> <MAIN> <OPEN_PAREN> <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> Identifier <CLOSE_PAREN>  // psvm
-                    <OPEN_CURL> (VarDeclaration)* (Statement)* <CLOSE_CURL> |
+                    <OPEN_CURL> MethodContent <CLOSE_CURL> |
                     Type Identifier <OPEN_PAREN> ( Type Identifier ( <COMMA> Type Identifier )* )? <CLOSE_PAREN>
-                    <OPEN_CURL> (VarDeclaration)* (Statement)*
+                    <OPEN_CURL> MethodContent
                     <RETURN> Expression <SEMICOLON> <CLOSE_CURL> ;                                                      // generic method declaration
 
+MethodContent #void: (VarDeclaration)* (Statement)*;
 
-Type : <INT> <OPEN_SQUARE> <CLOSE_SQUARE> |  //spaghettios
+Type #void: <INT> (<OPEN_SQUARE> <CLOSE_SQUARE>)? |  //spaghettios
        <BOOLEAN> |
-       <INT> |
+       <STRING> |
        Identifier ;
 
 Statement : <OPEN_CURL> (Statement)* <CLOSE_CURL> |
             <IF> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement <ELSE> Statement |  // if then else
             <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement |                // while loop
-            Expression <SEMICOLON> |
-            Assignment ;
+            SCAN 2 Assignment |
+            Expression <SEMICOLON>;
 
 Assignment : Identifier (Indexing)? <EQUALS> Expression <SEMICOLON> ;
 
 Expression : AndExpression ;
 
-Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
+Indexing #void: <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
+AndExpression #void: CompareExpression (<AND> CompareExpression)* ;
 
+CompareExpression #void: AdditiveExpression (<LT> AdditiveExpression)* ;
 
-AndExpression : CompareExpression (<AND> CompareExpression)* ;
+AdditiveExpression #void: MultiplicativeExpression ( (<PLUS> | <MINUS>) MultiplicativeExpression )* ;
 
-CompareExpression : AdditiveExpression (<LT> AdditiveExpression)* ;
+MultiplicativeExpression #void: AccessExpression ( (<TIMES> | <DIVIDE>) AccessExpression )* ;
 
-AdditiveExpression : MultiplicativeExpression ( (<PLUS> | <MINUS>) MultiplicativeExpression )* ;
+AccessExpression #void: Factor (Indexing | <DOT> CallExpression)? ;
 
-MultiplicativeExpression : AccessExpression ( (<TIMES> | <DIVIDE>) AccessExpression )* ;
-
-AccessExpression : Factor (Indexing | <DOT> CallExpression) ;
-
-CallExpression : <LENGTH> |
+CallExpression #void: <LENGTH> |
                  Identifier <OPEN_PAREN> (Expression (<COMMA> Expression)*)? <CLOSE_PAREN> ;  // method call
 
-Factor : <INTEGER> | <TRUE> | <FALSE> | <THIS> |
+Factor #void: <INTEGER> | <TRUE> | <FALSE> | <THIS> |
         <NOT> Factor |
         <NEW> NewExpression |
         <OPEN_PAREN> AndExpression <CLOSE_PAREN> |
         Identifier ;
 
-NewExpression : <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> |  // create int array
+NewExpression #void: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> |  // create int array
                 Identifier <OPEN_PAREN> <CLOSE_PAREN> ;          // Identifier constructor call
 
 Identifier : <IDENT> ;
