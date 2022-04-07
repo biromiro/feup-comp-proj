@@ -116,8 +116,8 @@ AndExpression #void: CompareExpression ((<AND> CompareExpression { jjtThis.put("
 CompareExpression #void: AdditiveExpression ((<LT> AdditiveExpression { jjtThis.put("op", "LT"); }) #BinaryOp(2))* ;
 
 AdditiveExpression #void: MultiplicativeExpression (
-                            (<PLUS> MultiplicativeExpression {jjtThis.put("ADD", "ADD"); }) #BinaryOp(2) |
-                            (<MINUS> MultiplicativeExpression {jjtThis.put("SUB", "SUB"); }) #BinaryOp(2))* ;
+                            (<PLUS> MultiplicativeExpression {jjtThis.put("op", "ADD"); }) #BinaryOp(2) |
+                            (<MINUS> MultiplicativeExpression {jjtThis.put("op", "SUB"); }) #BinaryOp(2))* ;
 
 MultiplicativeExpression #void: UnaryExpression (
                             (<TIMES> UnaryExpression {jjtThis.put("op", "MUL"); }) #BinaryOp(2) |
