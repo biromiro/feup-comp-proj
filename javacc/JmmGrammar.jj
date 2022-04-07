@@ -78,7 +78,7 @@ Type: <INT> ({jjtThis.put("type", "int"); })
 
 MainOrRegularMethod #void: MainMethodDef | MethodDef;
 
-MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter #Parameters <CLOSE_PAREN>
+MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
             <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
 CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string array"); }) #Type
@@ -89,7 +89,7 @@ MethodDef: Type
                <OPEN_PAREN> (Parameters)? <CLOSE_PAREN>
                <OPEN_CURL> (MethodContent ReturnStatement) #MethodBody <CLOSE_CURL>;
 
-Parameters: Parameter ( <COMMA> Parameter )* ;
+Parameters #void: Parameter ( <COMMA> Parameter )* ;
 
 Parameter: Type
            <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
@@ -99,15 +99,15 @@ ReturnStatement: <RETURN> Expression <SEMICOLON>;
 MethodContent #void: (VarDeclaration)* (Statement)*;
 
 Statement #void: ScopeStatement |
-                 IfElseStatement |
+                 IfThenElseStatement |
                  WhileStatement |
                  Expression (<EQUALS> Expression #Assignment(2))? <SEMICOLON>;
 
 ScopeStatement: <OPEN_CURL> (Statement)* <CLOSE_CURL>;
 
-IfElseStatement: <IF> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #ThenCase <ELSE> Statement #ElseCase;
+IfThenElseStatement: <IF> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement <ELSE> Statement;
 
-WhileStatement: <WHILE> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #LoopedStatement;
+WhileStatement: <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement;
 
 Expression #void: AndExpression;
 
@@ -149,10 +149,14 @@ MethodCall #MethodCall(2): <IDENT> ({jjtThis.put("methodname", lastConsumedToken
 
 MethodArguments: (Expression (<COMMA> Expression)*)?;
 
-Operand #void: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); }) #IntegerLiteral
-        | <TRUE> #TrueKeyword | <FALSE> #FalseKeyword | <THIS> #ThisKeyword |
+Operand #void: IntegerLiteral |
+        BooleanLiteral |
+        <THIS> #ThisKeyword |
         <OPEN_PAREN> Expression <CLOSE_PAREN> |
         <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) #Identifier;
+
+IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); });
+BooleanLiteral: <TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); });
 
 // Injections for the implementation of JmmNode
 INJECT BaseNode :
