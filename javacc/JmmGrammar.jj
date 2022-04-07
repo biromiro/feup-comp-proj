@@ -75,7 +75,7 @@ MainOrRegularMethod #void: MainMethodDef | MethodDef;
 MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter #Parameters <CLOSE_PAREN>
             <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
-CmdArgsParameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE>
+CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string array"); }) #Type
                   <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
 
 MethodDef: Type
@@ -136,18 +136,18 @@ NewIntArray: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 NewObject: <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
             <OPEN_PAREN> <CLOSE_PAREN>;
 
-AccessExpression #void: Operand (Indexing | <DOT> CallExpression)? ;
+AccessExpression #void: Operand (Indexing | (<DOT> CallExpression) )* ;
 
-Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
+Indexing #Indexing(2): <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
 CallExpression #void: LengthCall | MethodCall;
 
-LengthCall: <LENGTH>;
+LengthCall #LengthCall(1): <LENGTH>;
 
-MethodCall: <IDENT> ({jjtThis.put("methodname", lastConsumedToken.getImage()); })
-            <OPEN_PAREN> (MethodArguments)? <CLOSE_PAREN> ;
+MethodCall #MethodCall(2): <IDENT> ({jjtThis.put("methodname", lastConsumedToken.getImage()); })
+            <OPEN_PAREN> MethodArguments <CLOSE_PAREN> ;
 
-MethodArguments #Arguments: Expression (<COMMA> Expression)*;
+MethodArguments: (Expression (<COMMA> Expression)*)?;
 
 Operand #void: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); }) #IntegerLiteral
         | <TRUE> #TrueKeyword | <FALSE> #FalseKeyword | <THIS> #ThisKeyword |
