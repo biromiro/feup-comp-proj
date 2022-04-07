@@ -101,21 +101,13 @@ Type: <INT> ({jjtThis.put("type", "int"); })
 Statement #void: ScopeStatement |
                  IfElseStatement |
                  WhileStatement |
-                 SCAN 2 Assignment |
-                 Expression <SEMICOLON>;
+                 Expression (<EQUALS> Expression #Assignment(2))? <SEMICOLON>;
 
 ScopeStatement: <OPEN_CURL> (Statement)* <CLOSE_CURL>;
 
 IfElseStatement: <IF> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #ThenCase <ELSE> Statement #ElseCase;
 
 WhileStatement: <WHILE> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #LoopedStatement;
-
-Assignment : Variable #LHS <EQUALS> Expression #RHS <SEMICOLON> ;
-
-Variable: <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
-          (Indexing)?;
-
-Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
 Expression #void: AndExpression ;
 
@@ -154,6 +146,8 @@ NewObject: <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
             <OPEN_PAREN> <CLOSE_PAREN>;
 
 AccessExpression #void: Operand (Indexing | <DOT> CallExpression)? ;
+
+Indexing : <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
 CallExpression #void: LengthCall | MethodCall;
 
