@@ -70,6 +70,12 @@ VarDeclaration : SCAN 2
                  <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
                  <SEMICOLON> ;
 
+Type: <INT> ({jjtThis.put("type", "int"); })
+            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int array"); }))? |
+            <BOOLEAN> ({jjtThis.put("type", "boolean"); }) |
+            <STRING> ({jjtThis.put("type", "string"); }) |
+            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); });
+
 MainOrRegularMethod #void: MainMethodDef | MethodDef;
 
 MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter #Parameters <CLOSE_PAREN>
@@ -91,12 +97,6 @@ Parameter: Type
 ReturnStatement: <RETURN> Expression <SEMICOLON>;
 
 MethodContent #void: (VarDeclaration)* (Statement)*;
-
-Type: <INT> ({jjtThis.put("type", "int"); })
-            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int array"); }))? |
-            <BOOLEAN> ({jjtThis.put("type", "boolean"); }) |
-            <STRING> ({jjtThis.put("type", "string"); }) |
-            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); });
 
 Statement #void: ScopeStatement |
                  IfElseStatement |
