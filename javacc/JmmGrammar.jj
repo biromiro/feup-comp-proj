@@ -109,29 +109,20 @@ IfElseStatement: <IF> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement
 
 WhileStatement: <WHILE> <OPEN_PAREN> Expression #Condition <CLOSE_PAREN> Statement #LoopedStatement;
 
-Expression #void: AndExpression ;
+Expression #void: AndExpression;
 
-AndExpression #void: CompareExpression (<AND> CompareExpression)* ;
+AndExpression #void: CompareExpression ((<AND> CompareExpression { jjtThis.put("op", "AND"); }) #BinaryOp(2))* ;
 
-CompareExpression #void: AdditiveExpression (<LT> AdditiveExpression)* ;
-
-AdditiveExpression #void: MultiplicativeExpression ( (<PLUS> | <MINUS>) MultiplicativeExpression )* ;
-
-MultiplicativeExpression #void: UnaryExpression ( (<TIMES> | <DIVIDE>) UnaryExpression )* ;
-
-/*
-AndExpression #void: CompareExpression ((<AND> CompareExpression ({jjtThis.put("op", "AND"); })) #BinOp(2))* ;
-
-CompareExpression #void: AdditiveExpression ((<LT> AdditiveExpression ({jjtThis.put("op", "LT"); })) #BinOp(2))* ;
+CompareExpression #void: AdditiveExpression ((<LT> AdditiveExpression { jjtThis.put("op", "LT"); }) #BinaryOp(2))* ;
 
 AdditiveExpression #void: MultiplicativeExpression (
-                            (<PLUS> MultiplicativeExpression ({jjtThis.put("ADD", "+"); })) #BinOp(2) |
-                            (<MINUS> MultiplicativeExpression ({jjtThis.put("SUB", "-"); })) #BinOp(2) )* ;
+                            (<PLUS> MultiplicativeExpression {jjtThis.put("ADD", "ADD"); }) #BinaryOp(2) |
+                            (<MINUS> MultiplicativeExpression {jjtThis.put("SUB", "SUB"); }) #BinaryOp(2))* ;
 
 MultiplicativeExpression #void: UnaryExpression (
-                            (<TIMES> UnaryExpression ({jjtThis.put("op", "MUL"); })) #BinOp(2) |
-                            (<DIVIDE> UnaryExpression ({jjtThis.put("op", "DIV"); })) #BinOp(2) )* ;
-*/
+                            (<TIMES> UnaryExpression {jjtThis.put("op", "MUL"); }) #BinaryOp(2) |
+                            (<DIVIDE> UnaryExpression {jjtThis.put("op", "DIV"); }) #BinaryOp(2))* ;
+
 UnaryExpression #void: NotExpression |
                  <NEW> NewExpression |
                  AccessExpression;
