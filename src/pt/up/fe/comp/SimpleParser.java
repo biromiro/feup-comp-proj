@@ -32,24 +32,32 @@ public class SimpleParser implements JmmParser {
         try {
 
             JmmGrammarParser parser = new JmmGrammarParser(SpecsIo.toInputStream(jmmCode));
-            SpecsSystem.invoke(parser, startingRule); //get cause
+            SpecsSystem.invoke(parser, startingRule); // TODO get cause
 
             Node root = parser.rootNode();
             if (root == null) {
                 throw new ParseException(parser, "Parsing problems, root is null");
             }
 
-            System.out.println(((JmmNode) root).sanitize().toTree());
-
             if (!(root instanceof JmmNode)) {
                 return JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
                         "JmmNode interface not yet implemented, returning null root node"));
             }
 
+            System.out.println(((JmmNode) root).sanitize().toTree());
+
             return new JmmParserResult((JmmNode) root, Collections.emptyList(), config);
 
         } catch (Exception e) {
-            return JmmParserResult.newError(Report.newError(Stage.SYNTATIC, -1, -1, "Exception during parsing", e));
+            var parseException = TestUtils.getException(e, ParseException.class);
+            if (parseException == null) {
+                return JmmParserResult.newError(Report.newError(Stage.OTHER, -1, -1, "Exception during parsing", e));
+            } else {
+                Token t = parseException.getToken();
+                String message = parseException.getMessage();
+                Report report = Report.newError(Stage.SYNTATIC, t.getBeginLine(), t.getBeginColumn(), message, parseException);
+                return JmmParserResult.newError(report);
+            }
         }
     }
 
