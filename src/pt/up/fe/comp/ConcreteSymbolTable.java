@@ -22,9 +22,17 @@ public class ConcreteSymbolTable implements SymbolTable {
         return imports;
     }
 
+    public void addImport(String importPath) {
+        imports.add(importPath);
+    }
+
     @Override
     public String getClassName() {
         return className;
+    }
+
+    public void setClassName(String name) {
+        className = name;
     }
 
     @Override
@@ -32,14 +40,26 @@ public class ConcreteSymbolTable implements SymbolTable {
         return superClass;
     }
 
+    public void setSuper(String name) {
+        superClass = name;
+    }
+
     @Override
     public List<Symbol> getFields() {
         return fields;
     }
 
+    public void addField(Symbol field) {
+        fields.add(field);
+    }
+
     @Override
     public List<String> getMethods() {
         return new ArrayList<>(methods.keySet());
+    }
+
+    public void addMethod(String methodName, Type returnType, List<Symbol> parameters) {
+        methods.put(methodName, new MethodInfo(returnType, parameters));
     }
 
     @Override

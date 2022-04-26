@@ -70,18 +70,18 @@ VarDeclaration : SCAN 2
                  <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
                  <SEMICOLON> ;
 
-Type: <INT> ({jjtThis.put("type", "int"); })
-            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int array"); }))? |
-            <BOOLEAN> ({jjtThis.put("type", "boolean"); }) |
-            <STRING> ({jjtThis.put("type", "string"); }) |
-            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); });
+Type: <INT> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "false"); })
+            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "true"); }))? |
+            <BOOLEAN> ({jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false"); }) |
+            <STRING> ({jjtThis.put("type", "string"); jjtThis.put("isArray", "false"); }) |
+            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); jjtThis.put("isArray", "false"); });
 
 MainOrRegularMethod #void: MainMethodDef | MethodDef;
 
-MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
+MainMethodDef: <STATIC> <VOID> ({jjtThis.put("type", "void"); }) #Type <MAIN> ({jjtThis.put("name", "main"); }) <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
             <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
-CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string array"); }) #Type
+CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string"); jjtThis.put("isArray", "true"); }) #Type
                   <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
 
 MethodDef: Type
