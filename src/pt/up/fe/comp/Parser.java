@@ -25,7 +25,7 @@ import pt.up.fe.specs.util.SpecsSystem;
  * specific language governing permissions and limitations under the License. under the License.
  */
 
-public class SimpleParser implements JmmParser {
+public class Parser implements JmmParser {
 
     @Override
     public JmmParserResult parse(String jmmCode, String startingRule, Map<String, String> config) {
