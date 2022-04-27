@@ -10,9 +10,10 @@ import java.util.List;
 
 public class AnalysisVisitor extends AJmmVisitor<ConcreteSymbolTable, Void> {
     public AnalysisVisitor() {
-        addVisit("Import", this::visitImport);
+        addVisit("ImportDeclaration", this::visitImport);
         addVisit("ClassDeclaration", this::visitClassDeclaration);
-        addVisit("VarDeclaration", this::visitVarDeclaration);
+        addVisit("MethodDef", this::visitMethod);
+        addVisit("MainMethodDef", this::visitMethod);
     }
 
     private Void visitImport(JmmNode jmmNode, ConcreteSymbolTable table) {
@@ -32,37 +33,65 @@ public class AnalysisVisitor extends AJmmVisitor<ConcreteSymbolTable, Void> {
         table.setClassName(jmmNode.get("classname"));
         table.setSuper(jmmNode.get("extends"));
 
-        return null;
-    }
-
-    private Void visitVarDeclaration(JmmNode jmmNode, ConcreteSymbolTable table) {
-        String name = jmmNode.get("name");
-        JmmNode child = jmmNode.getJmmChild(0);
-        Type type = new Type(child.get("type"), child.get("isArray") == "true");
-        Symbol symbol = new Symbol(type, name);
-
-        if (jmmNode.getJmmParent().getKind() == "ClassDeclaration") {
-            table.addField(symbol);
-        } else {
-            // TODO add method info
+        for (JmmNode child: jmmNode.getChildren()) {
+            if (child.getKind() == "VarDeclaration") {
+                Symbol symbol = getSymbol(jmmNode);
+                table.addField(symbol);
+            }
         }
 
         return null;
     }
 
     private Void visitMethod(JmmNode jmmNode, ConcreteSymbolTable table) {
-        String methodName = jmmNode.get("name");
-        JmmNode typeNode = jmmNode.getJmmChild(0);
-        Type returnType = new Type(typeNode.get("type"), typeNode.get("isArray") == "true");
+        StringBuilder methodNameBuilder = new StringBuilder();
+        methodNameBuilder.append(jmmNode.get("name"));
+        Type returnType = getType(jmmNode);
         List<Symbol> parameters = new ArrayList<>();
+        List<Symbol> variables = new ArrayList<>();
 
         for (JmmNode child: jmmNode.getChildren()) {
             if (child.getKind() == "Parameter") {
-                // parameters.add(child.get("name"));
+                Symbol parameter = getSymbol(child);
+                parameters.add(parameter);
+                methodNameBuilder.append("#");
+                methodNameBuilder.append(getTypeMethodNameCode(child));
+            } else if (child.getKind() == "MethodBody") {
+                for (JmmNode grandchild: child.getChildren()) {
+                    if (grandchild.getKind() == "VarDeclaration") {
+                        Symbol localVariable = getSymbol(grandchild);
+                        variables.add(localVariable);
+                    }
+                }
             }
         }
 
-        table.addMethod(methodName, returnType, parameters);
+        String methodName = methodNameBuilder.toString();
+
+        table.addMethod(methodName, returnType, parameters, variables);
         return null;
+    }
+
+    private String getTypeMethodNameCode(JmmNode jmmNode) {
+        StringBuilder builder = new StringBuilder();
+        JmmNode child = jmmNode.getJmmChild(0);
+        String type = child.get("type");
+        boolean isArray = child.get("isArray").equals("true"));
+        builder.append(type);
+        if (isArray) {
+            builder.append("[]");
+        }
+        return builder.toString();
+    }
+
+    private Type getType(JmmNode jmmNode) {
+        JmmNode child = jmmNode.getJmmChild(0);
+        return new Type(child.get("type"), child.get("isArray").equals("true"));
+    }
+
+    private Symbol getSymbol(JmmNode jmmNode) {
+        String name = jmmNode.get("name");
+        Type type = getType(jmmNode);
+        return new Symbol(type, name);
     }
 }

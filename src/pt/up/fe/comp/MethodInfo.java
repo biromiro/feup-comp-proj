@@ -11,9 +11,10 @@ public class MethodInfo {
     private List<Symbol> parameters;
     private List<Symbol> variables;
 
-    public MethodInfo(Type returnType, List<Symbol> parameters) {
+    public MethodInfo(Type returnType, List<Symbol> parameters, List<Symbol> variables) {
         this.returnType = returnType;
         this.parameters = parameters;
+        this.variables = variables;
     }
 
     public Type getReturnType() {

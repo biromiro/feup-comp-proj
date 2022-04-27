@@ -58,8 +58,8 @@ public class ConcreteSymbolTable implements SymbolTable {
         return new ArrayList<>(methods.keySet());
     }
 
-    public void addMethod(String methodName, Type returnType, List<Symbol> parameters) {
-        methods.put(methodName, new MethodInfo(returnType, parameters));
+    public void addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> variables) {
+        methods.put(methodName, new MethodInfo(returnType, parameters, variables));
     }
 
     @Override
