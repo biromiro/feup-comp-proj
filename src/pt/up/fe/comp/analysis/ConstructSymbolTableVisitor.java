@@ -73,7 +73,8 @@ public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable
             }
         }
 
-        table.addMethod(methodName, returnType, parameters, variables);
+        String methodSignature = table.addMethod(methodName, returnType, parameters, variables);
+        jmmNode.put("signature", methodSignature);
         return null;
     }
 
