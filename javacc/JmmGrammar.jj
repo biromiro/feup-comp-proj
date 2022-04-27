@@ -78,7 +78,7 @@ Type: <INT> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "false"); })
 
 MainOrRegularMethod #void: MainMethodDef | MethodDef;
 
-MainMethodDef: <STATIC> <VOID> ({jjtThis.put("type", "void"); }) #Type <MAIN> ({jjtThis.put("name", "main"); }) <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
+MainMethodDef: <STATIC> <VOID> ({jjtThis.put("type", "void"); jjtThis.put("isArray", "false"); }) #Type <MAIN> ({jjtThis.put("name", "main"); }) <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
             <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
 CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string"); jjtThis.put("isArray", "true"); }) #Type

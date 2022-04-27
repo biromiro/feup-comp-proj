@@ -1,8 +1,9 @@
-package pt.up.fe.comp;
+package pt.up.fe.comp.parse;
 
 import java.util.Collections;
 import java.util.Map;
 
+import pt.up.fe.comp.*;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.parser.JmmParser;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
@@ -43,8 +44,6 @@ public class Parser implements JmmParser {
                 return JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
                         "JmmNode interface not yet implemented, returning null root node"));
             }
-
-            System.out.println(((JmmNode) root).sanitize().toTree());
 
             return new JmmParserResult((JmmNode) root, Collections.emptyList(), config);
 

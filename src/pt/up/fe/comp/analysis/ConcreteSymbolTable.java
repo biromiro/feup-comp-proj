@@ -1,4 +1,4 @@
-package pt.up.fe.comp;
+package pt.up.fe.comp.analysis;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
@@ -12,10 +12,10 @@ import java.util.Map;
 public class ConcreteSymbolTable implements SymbolTable {
 
     private final Map<String, MethodInfo> methods = new HashMap<>();
-    private List<String> imports;
-    private String className;
-    private String superClass;
-    private List<Symbol> fields;
+    private List<String> imports = new ArrayList<>();
+    private String className = null;
+    private String superClass = null;
+    private List<Symbol> fields = new ArrayList<>();
 
     @Override
     public List<String> getImports() {
@@ -59,7 +59,28 @@ public class ConcreteSymbolTable implements SymbolTable {
     }
 
     public void addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> variables) {
-        methods.put(methodName, new MethodInfo(returnType, parameters, variables));
+        methods.put(getMethodSignature(methodName, parameters), new MethodInfo(returnType, parameters, variables));
+    }
+
+    public static String getMethodSignature(String methodName, List<Symbol> parameters) {
+        StringBuilder methodSignatureBuilder = new StringBuilder();
+        methodSignatureBuilder.append(methodName);
+        for (Symbol parameter: parameters) {
+            methodSignatureBuilder.append("#");
+            methodSignatureBuilder.append(getTypeSignature(parameter.getType()));
+        }
+
+        return methodSignatureBuilder.toString();
+    }
+
+    private static String getTypeSignature(Type type) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(type.getName());
+        if (type.isArray()) {
+            builder.append("[]");
+        }
+
+        return builder.toString();
     }
 
     @Override
