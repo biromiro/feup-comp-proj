@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import pt.up.fe.comp.jmm.ast.JmmNode;
+import pt.up.fe.comp.analysis.Analyser;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
+import pt.up.fe.comp.parse.Parser;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
 import pt.up.fe.specs.util.SpecsSystem;
@@ -35,16 +37,18 @@ public class Launcher {
         config.put("registerAllocation", "-1");
         config.put("debug", "false");
 
-        // Instantiate JmmParser
-        SimpleParser parser = new SimpleParser();
-
         // Parse stage
+        Parser parser = new Parser();
         JmmParserResult parserResult = parser.parse(input, config);
-
-        // Check if there are parsing errors
+        //System.out.println(parserResult.getRootNode().sanitize().toTree());
+        //System.out.println(parserResult.getRootNode().toJson());
         TestUtils.noErrors(parserResult.getReports());
 
-        System.out.println(parserResult.getRootNode().toJson());
+        // Analysis stage
+        Analyser analyser =  new Analyser();
+        JmmSemanticsResult analysisResult = analyser.semanticAnalysis(parserResult);
+        System.out.println(analysisResult.getSymbolTable().print());
+        TestUtils.noErrors(analysisResult.getReports());
 
         // ... add remaining stages
     }
