@@ -12,9 +12,9 @@ import java.util.*;
 
 public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report>> {
     static final List<String> PRIMITIVES = Arrays.asList("int", "void", "boolean");
-    static final List<String> ARITHMETIC_OP = Arrays.asList("ADD", "SUB", "MUL", "DIV");
-    static final List<String> COMPARISON_OP = Arrays.asList("LT");
-    static final List<String> LOGICAL_OP = Arrays.asList("AND");
+    static final List<String> ARITHMETIC_OP = Arrays.asList("+", "-", "*", "/");
+    static final List<String> COMPARISON_OP = Arrays.asList("<");
+    static final List<String> LOGICAL_OP = Arrays.asList("&&");
 
 
     public AnalyseVisitor() {
@@ -115,7 +115,11 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
         }
 
         if (!jmmNode.getJmmParent().getKind().equals("MethodCall")
-                || (!identifier.equals("String") && !symbolTable.getClassName().equals(identifier) && !symbolTable.getImports().contains(identifier))) {
+                || (
+                !identifier.equals("String") &&
+                !symbolTable.getClassName().equals(identifier) &&
+                !symbolTable.getImports().stream().anyMatch(imp -> imp.substring(imp.lastIndexOf(".") + 1).equals(identifier)))
+        ) {
             putUnknownType(jmmNode);
             reports.add(ReportUtils.cannotFindSymbolReport(jmmNode, identifier));
         }
@@ -175,11 +179,13 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
             Type returnType = symbolTable.getReturnType(methodSignature);
             putType(jmmNode, returnType);
         } else {
-            boolean incompleteSignature = symbolTable
+            boolean incompleteSignature = methodSignature.contains("##UNKNOWN");
+            boolean methodLooselyExists = incompleteSignature &&
+                    symbolTable
                     .getMethods()
                     .stream()
-                    .anyMatch(m -> m.substring(0, m.indexOf("#")).equals(jmmNode.get("methodname")));
-            if (!incompleteSignature && symbolTable.getSuper() == null) {
+                    .anyMatch(m -> m.split("#")[0].equals(jmmNode.get("methodname")));
+            if (!methodLooselyExists && symbolTable.getSuper() == null) {
                 String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
                 reports.add(ReportUtils.cannotFindSymbolReport(jmmNode, symbolName));
             }
@@ -293,27 +299,35 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
 
         if (!lhsType.equals(rhsType)) {
             putUnknownType(jmmNode);
-            reports.add(ReportUtils.incompatibleTypesReport(jmmNode, rhsType.print(), lhsType.print()));
+            reports.add(ReportUtils.operatorCannotBeAppliedReport(jmmNode, jmmNode.get("op"), lhsType.print(), rhsType.print()));
             return reports;
-        } else if (ARITHMETIC_OP.contains(jmmNode.get("op")) || LOGICAL_OP.contains(jmmNode.get("op"))) {
+        }
+
+        if (ARITHMETIC_OP.contains(jmmNode.get("op")) || LOGICAL_OP.contains(jmmNode.get("op"))) {
             if (lhsType.isArray()) {
                 putUnknownType(jmmNode);
                 reports.add(ReportUtils.operatorCannotBeAppliedReport(jmmNode, jmmNode.get("op"), lhsType.print(), rhsType.print()));
                 return reports;
             }
-        } else if (ARITHMETIC_OP.contains(jmmNode.get("op")) || COMPARISON_OP.contains(jmmNode.get("op"))) {
+        }
+
+        if (ARITHMETIC_OP.contains(jmmNode.get("op")) || COMPARISON_OP.contains(jmmNode.get("op"))) {
             if (!lhsType.getName().equals("int")) {
                 putUnknownType(jmmNode);
                 reports.add(ReportUtils.operatorCannotBeAppliedReport(jmmNode, jmmNode.get("op"), lhsType.print(), rhsType.print()));
                 return reports;
             }
-        } else if (LOGICAL_OP.contains(jmmNode.get("op"))) {
+        }
+
+        if (LOGICAL_OP.contains(jmmNode.get("op"))) {
             if (!lhsType.getName().equals("boolean")) {
                 putUnknownType(jmmNode);
                 reports.add(ReportUtils.operatorCannotBeAppliedReport(jmmNode, jmmNode.get("op"), lhsType.print(), rhsType.print()));
                 return reports;
             }
-        } else if (!PRIMITIVES.contains(lhsType.getName())) {
+        }
+
+        if (!PRIMITIVES.contains(lhsType.getName())) {
             putUnknownType(jmmNode);
             reports.add(ReportUtils.operatorCannotBeAppliedReport(jmmNode, jmmNode.get("op"), lhsType.print(), rhsType.print()));
             return reports;
