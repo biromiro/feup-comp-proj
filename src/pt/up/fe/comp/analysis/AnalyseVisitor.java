@@ -10,7 +10,6 @@ import pt.up.fe.specs.util.SpecsCollections;
 
 import java.util.*;
 
-// TODO better error messages and line/column numbers?
 public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report>> {
     static final List<String> PRIMITIVES = Arrays.asList("int", "void", "boolean");
     static final List<String> ARITHMETIC_OP = Arrays.asList("ADD", "SUB", "MUL", "DIV");
@@ -116,7 +115,7 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
         }
 
         if (!jmmNode.getJmmParent().getKind().equals("MethodCall")
-                || (!symbolTable.getClassName().equals(identifier) && !symbolTable.getImports().contains(identifier))) {
+                || (!identifier.equals("String") && !symbolTable.getClassName().equals(identifier) && !symbolTable.getImports().contains(identifier))) {
             putUnknownType(jmmNode);
             reports.add(ReportUtils.cannotFindSymbolReport(jmmNode, identifier));
         }
@@ -137,7 +136,7 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
                 String methodSignature = inferMethodSignature(jmmNode);
                 if (symbolTable.getMethods().contains(methodSignature)) {
                     String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
-                    reports.add(ReportUtils.NonStaticInStaticContext(jmmNode, symbolName));
+                    reports.add(ReportUtils.nonStaticInStaticContext(jmmNode, symbolName));
                 } else if (symbolTable.getSuper() == null) {
                     String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
                     reports.add(ReportUtils.cannotFindSymbolReport(jmmNode, symbolName));
