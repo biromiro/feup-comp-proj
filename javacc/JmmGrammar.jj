@@ -73,7 +73,7 @@ VarDeclaration : SCAN 2
 Type: <INT> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "false"); })
             (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "true"); }))? |
             <BOOLEAN> ({jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false"); }) |
-            <STRING> ({jjtThis.put("type", "string"); jjtThis.put("isArray", "false"); }) |
+            <STRING> ({jjtThis.put("type", "String"); jjtThis.put("isArray", "false"); }) |
             <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); jjtThis.put("isArray", "false"); });
 
 MainOrRegularMethod #void: MainMethodDef | MethodDef;
@@ -81,7 +81,7 @@ MainOrRegularMethod #void: MainMethodDef | MethodDef;
 MainMethodDef: <STATIC> <VOID> ({jjtThis.put("type", "void"); jjtThis.put("isArray", "false"); }) #Type <MAIN> ({jjtThis.put("name", "main"); }) <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
             <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
-CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string"); jjtThis.put("isArray", "true"); }) #Type
+CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "String"); jjtThis.put("isArray", "true"); }) #Type
                   <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
 
 MethodDef: Type
@@ -133,7 +133,7 @@ NewExpression #void: NewIntArray | NewObject ;
 
 NewIntArray: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
-NewObject: <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
+NewObject: <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); jjtThis.put("isArray", "false"); })
             <OPEN_PAREN> <CLOSE_PAREN>;
 
 AccessExpression #void: Operand (Indexing | (<DOT> CallExpression) )* ;
@@ -155,8 +155,8 @@ Operand #void: IntegerLiteral |
         <OPEN_PAREN> Expression <CLOSE_PAREN> |
         <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) #Identifier;
 
-IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); });
-BooleanLiteral: <TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); });
+IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); jjtThis.put("type", "int"); jjtThis.put("isArray", "false");});
+BooleanLiteral: (<TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); })) ({ jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false");});
 
 // Injections for the implementation of JmmNode
 INJECT BaseNode :
