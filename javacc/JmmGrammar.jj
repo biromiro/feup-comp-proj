@@ -123,11 +123,9 @@ MultiplicativeExpression #void: UnaryExpression (
                             (<TIMES> UnaryExpression {jjtThis.put("op", "MUL"); }) #BinaryOp(2) |
                             (<DIVIDE> UnaryExpression {jjtThis.put("op", "DIV"); }) #BinaryOp(2))* ;
 
-UnaryExpression #void: NotExpression |
-                 <NEW> NewExpression |
-                 AccessExpression;
+UnaryExpression #void: NotExpression | AccessExpression;
 
-NotExpression: <NOT> AccessExpression;
+NotExpression: <NOT> UnaryExpression;
 
 NewExpression #void: NewIntArray | NewObject ;
 
@@ -153,6 +151,7 @@ Operand #void: IntegerLiteral |
         BooleanLiteral |
         <THIS> #ThisKeyword |
         <OPEN_PAREN> Expression <CLOSE_PAREN> |
+        <NEW> NewExpression |
         <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) #Identifier;
 
 IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); jjtThis.put("type", "int"); jjtThis.put("isArray", "false");});
