@@ -133,7 +133,7 @@ NewExpression #void: NewIntArray | NewObject ;
 
 NewIntArray: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
-NewObject: <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
+NewObject: <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); jjtThis.put("isArray", "false"); })
             <OPEN_PAREN> <CLOSE_PAREN>;
 
 AccessExpression #void: Operand (Indexing | (<DOT> CallExpression) )* ;
@@ -155,8 +155,8 @@ Operand #void: IntegerLiteral |
         <OPEN_PAREN> Expression <CLOSE_PAREN> |
         <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) #Identifier;
 
-IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); });
-BooleanLiteral: <TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); });
+IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); jjtThis.put("type", "int"); jjtThis.put("isArray", "false");});
+BooleanLiteral: (<TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); })) ({ jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false");});
 
 // Injections for the implementation of JmmNode
 INJECT BaseNode :
