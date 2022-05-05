@@ -40,15 +40,16 @@ public class Launcher {
         // Parse stage
         Parser parser = new Parser();
         JmmParserResult parserResult = parser.parse(input, config);
-        TestUtils.noErrors(parserResult.getReports());
-        System.out.println(parserResult.getRootNode().sanitize().toTree());
+        //System.out.println(parserResult.getRootNode().sanitize().toTree());
         //System.out.println(parserResult.getRootNode().toJson());
+        TestUtils.noErrors(parserResult.getReports());
 
         // Analysis stage
         Analyser analyser =  new Analyser();
         JmmSemanticsResult analysisResult = analyser.semanticAnalysis(parserResult);
-        TestUtils.noErrors(analysisResult.getReports());
         System.out.println(analysisResult.getSymbolTable().print());
+        System.out.println(analysisResult.getRootNode().toTree());
+        TestUtils.noErrors(analysisResult.getReports());
 
         // ... add remaining stages
     }

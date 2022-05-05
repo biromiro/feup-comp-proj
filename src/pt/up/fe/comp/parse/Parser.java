@@ -45,6 +45,8 @@ public class Parser implements JmmParser {
                         "JmmNode interface not yet implemented, returning null root node"));
             }
 
+            new LineColAnnotator().visit((JmmNode) root);
+
             return new JmmParserResult((JmmNode) root, Collections.emptyList(), config);
 
         } catch (Exception e) {

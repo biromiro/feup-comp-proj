@@ -58,21 +58,8 @@ public class ConcreteSymbolTable implements SymbolTable {
         return new ArrayList<>(methods.keySet());
     }
 
-    public String addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> variables) {
-        String signature = getMethodSignature(methodName, parameters);
+    public void addMethod(String signature, Type returnType, List<Symbol> parameters, List<Symbol> variables) {
         methods.put(signature, new MethodInfo(returnType, parameters, variables));
-        return signature;
-    }
-
-    public static String getMethodSignature(String methodName, List<Symbol> parameters) {
-        StringBuilder methodSignatureBuilder = new StringBuilder();
-        methodSignatureBuilder.append(methodName);
-        for (Symbol parameter: parameters) {
-            methodSignatureBuilder.append("#");
-            methodSignatureBuilder.append(parameter.getType().print());
-        }
-
-        return methodSignatureBuilder.toString();
     }
 
     @Override

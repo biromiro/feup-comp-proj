@@ -5,13 +5,10 @@ import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
-import pt.up.fe.specs.util.SpecsCollections;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable, List<Report>> {
     public ConstructSymbolTableVisitor() {
@@ -63,69 +60,63 @@ public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable
 
         for (JmmNode child: jmmNode.getChildren()) {
             if (child.getKind().equals("VarDeclaration")) {
-                Symbol symbol = getSymbol(child);
-                if (table.getFields().contains(symbol)) {
-                    reports.add(variableAlreadyDefinedReport(symbol.getName(), table.getClassName()));
+                Symbol symbol = AnalysisUtils.getSymbol(child);
+
+                if (table.getFields().stream().anyMatch(s -> s.getName().equals(symbol.getName()))) {
+                    reports.add(ReportUtils.symbolAlreadyDefinedReport(child, "variable", symbol.getName(), "class", table.getClassName()));
                 } else {
                     table.addField(symbol);
                 }
             } else {
-                visit(child, table);
+                visitAndReduce(child, table, reports);
             }
         }
 
         return reports;
     }
 
-    //private void visitMethod(JmmNode jmmNode, ConcreteSymbolTable table) {
-
-    //}
-
     private List<Report> visitMethod(JmmNode jmmNode, ConcreteSymbolTable table) {
-        // TODO errors
         List<Report> reports = new ArrayList<>();
 
         String methodName = jmmNode.get("name");
-        Type returnType = getType(jmmNode);
+        Type returnType = AnalysisUtils.getType(jmmNode.getJmmChild(0));
         List<Symbol> parameters = new ArrayList<>();
         List<Symbol> variables = new ArrayList<>();
 
         for (JmmNode child: jmmNode.getChildren()) {
             if (child.getKind().equals("Parameter")) {
-                parameters.add(getSymbol(child));
+                Symbol symbol = AnalysisUtils.getSymbol(child);
+
+                if (parameters.stream().anyMatch(s -> s.getName().equals(symbol.getName()))) {
+                    reports.add(ReportUtils.symbolAlreadyDefinedReport(child , "variable", symbol.getName(), "method", methodName));
+                } else {
+                    parameters.add(symbol);
+                }
             } else if (child.getKind().equals("MethodBody")) {
                 for (JmmNode grandchild: child.getChildren()) {
                     if (grandchild.getKind().equals("VarDeclaration")) {
-                        variables.add(getSymbol(grandchild));
+                        Symbol symbol = AnalysisUtils.getSymbol(grandchild);
+
+                        if (Stream.concat(variables.stream(), parameters.stream()).anyMatch(s -> s.getName().equals(symbol.getName()))) {
+                            reports.add(ReportUtils.symbolAlreadyDefinedReport(grandchild, "variable", symbol.getName(), "method", methodName));
+                        } else {
+                            variables.add(symbol);
+                        }
                     }
                 }
             }
         }
 
-        String methodSignature = table.addMethod(methodName, returnType, parameters, variables);
-        jmmNode.put("signature", methodSignature);
+        String methodSignature = AnalysisUtils.getMethodSignature(methodName, parameters);
+
+        if (table.getMethods().contains(methodSignature)) {
+            String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
+            reports.add(ReportUtils.symbolAlreadyDefinedReport(jmmNode, "method", symbolName, "class", table.getClassName()));
+        } else {
+            table.addMethod(methodSignature, returnType, parameters, variables);
+            jmmNode.put("signature", methodSignature);
+        }
+
         return reports;
-    }
-
-    static private Report variableAlreadyDefinedReport(String variable, String className) {
-        StringBuilder message = new StringBuilder();
-        message.append("variable ");
-        message.append(variable);
-        message.append(" is already defined in class ");
-        message.append(className);
-
-        return new Report(ReportType.ERROR, Stage.SEMANTIC, -1, message.toString());
-    }
-
-    private Type getType(JmmNode jmmNode) {
-        JmmNode child = jmmNode.getJmmChild(0);
-        boolean isArray = child.getAttributes().contains("isArray") && child.get("isArray").equals("true");
-        return new Type(child.get("type"), isArray);
-    }
-
-    private Symbol getSymbol(JmmNode jmmNode) {
-        String name = jmmNode.get("name");
-        Type type = getType(jmmNode);
-        return new Symbol(type, name);
     }
 }
