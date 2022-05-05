@@ -114,8 +114,9 @@ public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable
             reports.add(ReportUtils.symbolAlreadyDefinedReport(jmmNode, "method", symbolName, "class", table.getClassName()));
         } else {
             table.addMethod(methodSignature, returnType, parameters, variables);
-            jmmNode.put("signature", methodSignature);
         }
+
+        jmmNode.put("signature", methodSignature);
 
         return reports;
     }
