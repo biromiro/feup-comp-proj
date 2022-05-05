@@ -33,6 +33,7 @@ public class AnalysisUtils {
         if (methodSignature.contains("#")) {
             return methodSignature.replaceFirst("#", "(")
                     .replaceAll("##UNKNOWN", ",?")
+                    .replaceAll("\\(#UNKNOWN", "(?")
                     .replaceAll("#", ",")
                     .concat(")");
         }

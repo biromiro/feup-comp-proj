@@ -134,7 +134,19 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
         if (!jmmNode.getJmmChild(0).getAttributes().contains("type")) {
             if (jmmNode.getJmmChild(0).get("name").equals(symbolTable.getClassName())) {
                 String methodSignature = inferMethodSignature(jmmNode);
-                if (symbolTable.getMethods().contains(methodSignature)) {
+                boolean methodExists;
+                if (methodSignature.contains("##UNKNOWN")) {
+                    methodExists = symbolTable
+                            .getMethods()
+                            .stream()
+                            .anyMatch(m -> m.substring(0, m.indexOf("#")).equals(jmmNode.get("methodname")));
+                } else {
+                    methodExists = symbolTable
+                            .getMethods()
+                            .contains(methodSignature);
+                }
+                
+                if (methodExists) {
                     String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
                     reports.add(ReportUtils.nonStaticInStaticContext(jmmNode, symbolName));
                 } else if (symbolTable.getSuper() == null) {
@@ -163,11 +175,15 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
             Type returnType = symbolTable.getReturnType(methodSignature);
             putType(jmmNode, returnType);
         } else {
-            if (symbolTable.getSuper() == null) {
+            boolean incompleteSignature = symbolTable
+                    .getMethods()
+                    .stream()
+                    .anyMatch(m -> m.substring(0, m.indexOf("#")).equals(jmmNode.get("methodname")));
+            if (!incompleteSignature && symbolTable.getSuper() == null) {
                 String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
                 reports.add(ReportUtils.cannotFindSymbolReport(jmmNode, symbolName));
             }
-            putUnknownType(jmmNode);
+            putUnknownType(jmmNode); // TODO this might give problems if not checked for the restriction in page 2 of the assignment
         }
 
         return reports;
