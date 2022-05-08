@@ -24,8 +24,8 @@ public class ParserTest {
         var result = TestUtils.parse(code);
         TestUtils.noErrors(result.getReports());
 
-        /*System.out.println("Code: " + code + "\n");
-        System.out.println("AST:\n\n" + result.getRootNode().toTree());*/
+        System.out.println("Code: " + code + "\n");
+        System.out.println("AST:\n\n" + result.getRootNode().toTree());
         System.out.println("\n---------\n");
     }
 

@@ -7,7 +7,9 @@ import java.util.Map;
 
 import pt.up.fe.comp.analysis.Analyser;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
+import pt.up.fe.comp.ollir.Optimizer;
 import pt.up.fe.comp.parse.Parser;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
@@ -87,7 +89,13 @@ public class Launcher {
         System.out.println(analysisResult.getRootNode().toTree());
         TestUtils.noErrors(analysisResult.getReports());
 
+        // Optimization stage
+        Optimizer optimizer = new Optimizer();
+        JmmSemanticsResult optimizationResult = optimizer.optimize(analysisResult);
+        TestUtils.noErrors(optimizationResult);
+
         // ... add remaining stages
+
     }
 
 }
