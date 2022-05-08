@@ -23,4 +23,16 @@ public class OptimizeTest {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void testFac() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Fac.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void testLazySort() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
+        TestUtils.noErrors(result);
+    }
 }

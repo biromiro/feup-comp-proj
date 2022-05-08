@@ -6,7 +6,15 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 public class OllirUtils {
 
     public static String getCode(Symbol symbol) {
-        return symbol.getName() + "." + getCode(symbol.getType());
+        return "var_" + symbol.getName() + "." + getCode(symbol.getType());
+    }
+
+    public static String getCode(String value, Type type) {
+        return value + "." + getCode(type);
+    }
+
+    public static String getTempCode(String value, Type type) {
+        return "temp_" + value + "." + getCode(type);
     }
 
     public static String getCode(Type type) {
@@ -24,7 +32,11 @@ public class OllirUtils {
     public static String getOllirType(String jmmType) {
 
         switch (jmmType) {
-            case "void": return "V";
+            case "void":
+            case "#UNKNOWN":
+                return "V";
+            case "int": return "i32";
+            case "boolean": return "bool";
             default: return jmmType;
         }
     }

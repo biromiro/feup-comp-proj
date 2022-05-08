@@ -78,6 +78,11 @@ public class ParserTest {
         noErrors(SpecsIo.getResource("fixtures/public/WhileAndIf.jmm"));
     }
 
+    @Test
+    public void fac() {
+        noErrors(SpecsIo.getResource("fixtures/public/Fac.jmm"));
+    }
+
     /* 
      * Code with errors
      */

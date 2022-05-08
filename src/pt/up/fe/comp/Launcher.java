@@ -92,6 +92,8 @@ public class Launcher {
         // Optimization stage
         Optimizer optimizer = new Optimizer();
         JmmSemanticsResult optimizationResult = optimizer.optimize(analysisResult);
+        OllirResult ollirResult = optimizer.toOllir(optimizationResult);
+        System.out.println(ollirResult.getOllirCode());
         TestUtils.noErrors(optimizationResult);
 
         // ... add remaining stages
