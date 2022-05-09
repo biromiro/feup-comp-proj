@@ -38,31 +38,31 @@ public class Launcher {
             }
 
             switch (split[0]) {
-                case "-r" -> {
+                case "-r": {
                     if (split.length != 2) {
                         throw new RuntimeException("-r requires an argument");
                     }
                     config.put("registerAllocation", split[1]);
                 }
-                case "-i" -> {
+                case "-i": {
                     if (split.length != 2) {
                         throw new RuntimeException("-i requires an argument");
                     }
                     config.put("inputFile", split[1]);
                 }
-                case "-o" -> {
+                case "-o": {
                     if (split.length != 1) {
                         throw new RuntimeException("-o does not require an argument");
                     }
                     config.put("optimize", "true");
                 }
-                case "-d" -> {
+                case "-d": {
                     if (split.length != 1) {
                         throw new RuntimeException("-d does not require an argument");
                     }
                     config.put("debug", "true");
                 }
-                default -> throw new RuntimeException("Unknown argument: " + arg);
+                default: throw new RuntimeException("Unknown argument: " + arg);
             }
         }
 

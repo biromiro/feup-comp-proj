@@ -13,7 +13,8 @@ public class MyJasminBackend implements JasminBackend {
     public JasminResult toJasmin(OllirResult ollirResult) {
         ClassUnit ollir = ollirResult.getOllirClass();
         String jasminCode = new OllirToJasmin(ollir).getCode();
-        return null;
+        System.out.println("JASMIN CODE:\n" + jasminCode);
+        return new JasminResult(jasminCode);
     }
 
     private String genMethods(ClassUnit ollir) {

@@ -6,8 +6,8 @@ import pt.up.fe.specs.util.SpecsIo;
 public class JasminTest {
     @Test
     public void test() {
-        JasminResult jasminResult = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
+        var jasminResult = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(jasminResult);
-        String result = jasminResult.run();
+        jasminResult.run();
     }
 }
