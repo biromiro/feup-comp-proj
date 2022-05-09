@@ -70,18 +70,18 @@ VarDeclaration : SCAN 2
                  <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); })
                  <SEMICOLON> ;
 
-Type: <INT> ({jjtThis.put("type", "int"); })
-            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int array"); }))? |
-            <BOOLEAN> ({jjtThis.put("type", "boolean"); }) |
-            <STRING> ({jjtThis.put("type", "string"); }) |
-            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); });
+Type: <INT> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "false"); })
+            (<OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "int"); jjtThis.put("isArray", "true"); }))? |
+            <BOOLEAN> ({jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false"); }) |
+            <STRING> ({jjtThis.put("type", "String"); jjtThis.put("isArray", "false"); }) |
+            <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); jjtThis.put("isArray", "false"); });
 
 MainOrRegularMethod #void: MainMethodDef | MethodDef;
 
-MainMethodDef: <STATIC> <VOID> <MAIN> <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
+MainMethodDef: <STATIC> <VOID> ({jjtThis.put("type", "void"); jjtThis.put("isArray", "false"); }) #Type <MAIN> ({jjtThis.put("name", "main"); }) <OPEN_PAREN> CmdArgsParameter <CLOSE_PAREN>
             <OPEN_CURL> MethodContent #MethodBody <CLOSE_CURL>;
 
-CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "string array"); }) #Type
+CmdArgsParameter #Parameter: <STRING> <OPEN_SQUARE> <CLOSE_SQUARE> ({jjtThis.put("type", "String"); jjtThis.put("isArray", "true"); }) #Type
                   <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); });
 
 MethodDef: Type
@@ -111,29 +111,30 @@ WhileStatement: <WHILE> <OPEN_PAREN> Expression <CLOSE_PAREN> Statement;
 
 Expression #void: AndExpression;
 
-AndExpression #void: CompareExpression ((<AND> CompareExpression { jjtThis.put("op", "AND"); }) #BinaryOp(2))* ;
+AndExpression #void: CompareExpression ((<AND> CompareExpression { jjtThis.put("op", "&&"); }) #BinaryOp(2))* ;
 
-CompareExpression #void: AdditiveExpression ((<LT> AdditiveExpression { jjtThis.put("op", "LT"); }) #BinaryOp(2))* ;
+CompareExpression #void: AdditiveExpression ((<LT> AdditiveExpression { jjtThis.put("op", "<"); }) #BinaryOp(2))* ;
 
 AdditiveExpression #void: MultiplicativeExpression (
-                            (<PLUS> MultiplicativeExpression {jjtThis.put("op", "ADD"); }) #BinaryOp(2) |
-                            (<MINUS> MultiplicativeExpression {jjtThis.put("op", "SUB"); }) #BinaryOp(2))* ;
+                            (<PLUS> MultiplicativeExpression {jjtThis.put("op", "+"); }) #BinaryOp(2) |
+                            (<MINUS> MultiplicativeExpression {jjtThis.put("op", "-"); }) #BinaryOp(2))* ;
 
 MultiplicativeExpression #void: UnaryExpression (
-                            (<TIMES> UnaryExpression {jjtThis.put("op", "MUL"); }) #BinaryOp(2) |
-                            (<DIVIDE> UnaryExpression {jjtThis.put("op", "DIV"); }) #BinaryOp(2))* ;
+                            (<TIMES> UnaryExpression {jjtThis.put("op", "*"); }) #BinaryOp(2) |
+                            (<DIVIDE> UnaryExpression {jjtThis.put("op", "/"); }) #BinaryOp(2))* ;
 
-UnaryExpression #void: NotExpression |
-                 <NEW> NewExpression |
-                 AccessExpression;
+UnaryExpression #void: NotExpression | AccessExpression;
 
-NotExpression: <NOT> AccessExpression;
+NotExpression: <NOT> UnaryExpression;
 
 NewExpression #void: NewIntArray | NewObject ;
 
 NewIntArray: <INT> <OPEN_SQUARE> Expression <CLOSE_SQUARE> ;
 
-NewObject: <IDENT> ({jjtThis.put("classname", lastConsumedToken.getImage()); })
+NewObject: (
+                <IDENT> ({jjtThis.put("type", lastConsumedToken.getImage()); jjtThis.put("isArray", "false"); }) |
+                <STRING> ({jjtThis.put("type", "String"); jjtThis.put("isArray", "false"); })
+           )
             <OPEN_PAREN> <CLOSE_PAREN>;
 
 AccessExpression #void: Operand (Indexing | (<DOT> CallExpression) )* ;
@@ -153,10 +154,14 @@ Operand #void: IntegerLiteral |
         BooleanLiteral |
         <THIS> #ThisKeyword |
         <OPEN_PAREN> Expression <CLOSE_PAREN> |
-        <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) #Identifier;
+        <NEW> NewExpression |
+        (
+            <IDENT> ({jjtThis.put("name", lastConsumedToken.getImage()); }) |
+            <STRING> ({jjtThis.put("name", "String"); })
+        ) #Identifier;
 
-IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); });
-BooleanLiteral: <TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); });
+IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); jjtThis.put("type", "int"); jjtThis.put("isArray", "false");});
+BooleanLiteral: (<TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); })) ({ jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false");});
 
 // Injections for the implementation of JmmNode
 INJECT BaseNode :

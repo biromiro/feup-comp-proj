@@ -24,8 +24,8 @@ public class ParserTest {
         var result = TestUtils.parse(code);
         TestUtils.noErrors(result.getReports());
 
-        /*System.out.println("Code: " + code + "\n");
-        System.out.println("AST:\n\n" + result.getRootNode().toTree());*/
+        System.out.println("Code: " + code + "\n");
+        System.out.println("AST:\n\n" + result.getRootNode().toTree());
         System.out.println("\n---------\n");
     }
 
@@ -76,6 +76,11 @@ public class ParserTest {
     @Test
     public void whileAndIf() {
         noErrors(SpecsIo.getResource("fixtures/public/WhileAndIf.jmm"));
+    }
+
+    @Test
+    public void fac() {
+        noErrors(SpecsIo.getResource("fixtures/public/Fac.jmm"));
     }
 
     /* 
