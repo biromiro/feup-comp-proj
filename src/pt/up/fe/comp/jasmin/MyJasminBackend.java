@@ -1,4 +1,4 @@
-package pt.up.fe.comp;
+package pt.up.fe.comp.jasmin;
 
 import org.specs.comp.ollir.ClassUnit;
 import org.specs.comp.ollir.Method;
@@ -12,7 +12,7 @@ public class MyJasminBackend implements JasminBackend {
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
         ClassUnit ollir = ollirResult.getOllirClass();
-
+        String jasminCode = new OllirToJasmin(ollir).getCode();
         return null;
     }
 
