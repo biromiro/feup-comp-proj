@@ -34,6 +34,10 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         addVisit("BooleanLiteral", this::terminalVisit);
         addVisit("BinaryOp", this::binaryOpVisit);
         addVisit("ReturnStatement", this::returnStatementVisit);
+        addVisit("NewIntArray", this::newIntArrayVisit);
+        addVisit("LengthCall", this::lengthCallVisit);
+        addVisit("Indexing", this::indexingVisit);
+        addVisit("NewObject", this::newObjectVisit);
     }
 
     public String getCode() {
@@ -154,32 +158,16 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     private String assignmentVisit(JmmNode assignment, String dummy) {
 
-        String methodSignature = assignment
-                .getAncestor("MethodDef")
-                .or(() -> assignment.getAncestor("MainMethodDef"))
-                .get()
-                .get("signature");
+        JmmNode identifier = assignment.getJmmChild(0);
+        String lhs = visit(identifier);
+        String rhs = visit(assignment.getJmmChild(1));
 
-        Symbol variable = symbolTable.getLocalVariables(methodSignature).stream()
-                .filter(localVar -> assignment.getJmmChild(0).get("name").equals(localVar.getName()))
-                .findAny()
-                .orElse(null);
-
-        if (assignment.getNumChildren() > 0) {
-            String rhs = visit(assignment.getJmmChild(1));
-            JmmNode identifier = assignment.getJmmChild(0);
-            // TODO: check local vars first, then check class vars
-
-            ollirCode.append(OllirUtils.getCode(variable))
-                    .append(" :=.")
-                    .append(OllirUtils.getCode(variable.getType()))
-                    .append(" ")
-                    .append(rhs)
-                    .append(";\n");
-
-        } else {
-
-        }
+        ollirCode.append(lhs)
+                .append(" :=.")
+                .append(OllirUtils.getCode(AnalysisUtils.getType(identifier)))
+                .append(" ")
+                .append(rhs)
+                .append(";\n");
 
         return "";
     }
@@ -228,12 +216,6 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     private String methodCallVisit(JmmNode method, String dummy) {
 
-        // TODO: verify type of the first parameter (static or virtual)
-        // TODO: exprtoollir -> code before, value (ollirCode.append(codebefore).append(invokestatic(value..))
-        // TODO: verify return type of the called class
-
-        System.out.println("Called method visit\n");
-
         JmmNode identifier = method.getJmmChild(0);
         JmmNode methodArguments = method.getJmmChild(1);
         Optional<String> type = identifier.getOptional("type");
@@ -244,7 +226,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ollirCode.append("invokestatic(");
         }
 
-        ollirCode.append(identifier.get("name"))
+        ollirCode.append(visit(identifier))
                 .append(", \"").append(method.get("methodname")).append("\"");
 
         visit(methodArguments);
@@ -252,9 +234,6 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ollirCode.append(").")
                 .append(OllirUtils.getCode(AnalysisUtils.getType(method)))
                 .append(";\n");
-
-
-        // TODO: conditional visitor for arguments
 
         return "";
     }
@@ -268,7 +247,81 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return "";
     }
 
-    private String identifierVisit(JmmNode identifier, String dummy) {
+
+    private String newIntArrayVisit(JmmNode jmmNode, String s) {
+
+        String arrVal = visit(jmmNode.getJmmChild(0));
+        StringBuilder newIntArray = new StringBuilder();
+        Type arrayType = AnalysisUtils.getType(jmmNode);
+
+        newIntArray.append("new(array,")
+                .append(arrVal)
+                .append(").")
+                .append(OllirUtils.getCode(arrayType));
+
+        return newIntArray.toString();
+
+    }
+
+    private String lengthCallVisit(JmmNode jmmNode, String s) {
+
+        String callee = visit(jmmNode.getJmmChild(0));
+        Type callType = AnalysisUtils.getType(jmmNode);
+        String temp =  getNextTemp(callType);
+
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(callType))
+                .append(" ")
+                .append("arraylength(")
+                .append(callee)
+                .append(").")
+                .append(OllirUtils.getCode(callType))
+                .append(";\n");
+
+        return temp;
+
+    }
+
+
+    private String indexingVisit(JmmNode jmmNode, String s) {
+
+        JmmNode identifier = jmmNode.getJmmChild(0);
+        String indexValue = visit(jmmNode.getJmmChild(1));
+        Type indexType = AnalysisUtils.getType(jmmNode);
+
+        String rhs = getNextTemp(indexType);
+
+        ollirCode.append(rhs)
+                .append(" :=.")
+                .append(OllirUtils.getCode(indexType))
+                .append(" ")
+                .append(indexValue)
+                .append(";\n");
+
+        return visit(identifier, rhs);
+    }
+
+    private String newObjectVisit(JmmNode jmmNode, String s) {
+
+        StringBuilder newObj = new StringBuilder();
+        Type objType = AnalysisUtils.getType(jmmNode);
+
+        newObj.append("new(")
+                .append(jmmNode.get("type"))
+                .append(").")
+                .append(OllirUtils.getCode(objType));
+
+
+        return newObj.toString();
+
+    }
+
+    private String identifierVisit(JmmNode identifier, String indexing) {
+
+        Optional<String> type = identifier.getOptional("type");
+
+        if (type.isEmpty()) return identifier.get("name");
 
         String methodSignature = identifier
                 .getAncestor("MethodDef")
@@ -285,6 +338,13 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         if (index != -1) {
 
             parameterPrefix.append("$").append(index + 1).append(".");
+        }
+
+        if (indexing != null && !indexing.isEmpty()) {
+            return parameterPrefix.toString() + OllirUtils.getCode(
+                    new Symbol(AnalysisUtils.getType(identifier),
+                            identifier.get("name")
+                    ), indexing);
         }
 
         return parameterPrefix.toString() + OllirUtils.getCode(

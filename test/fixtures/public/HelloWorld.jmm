@@ -2,21 +2,27 @@ import ioPlus;
 class HelloWorld {
     int a;
 
-    public int calc(int abc, boolean calc) {
-        //int[] d;
-        //d = new int[3];
-        return abc;
+    public int calc(int[] abc, boolean calc) {
+        int[] d;
+        int a;
+        d = new int[abc.length + 2];
+        abc = new int[3];
+        abc[0] = 2;
+        a = abc[1];
+        return d.length;
     }
 
 	public static void main(String[] args) {
 	    int a;
 	    int b;
 	    int c;
+	    int[] julia;
 	    HelloWorld hello;
+	    hello =  new HelloWorld();
 	    a = 10*3-4+1;
 	    b = c + 3 * 2;
 	    c = a + c * 2 + 1;
-	    hello.calc(a, true);
+	    hello.calc(julia, true);
 		ioPlus.printHelloWorld();
 	}
 }
