@@ -2,6 +2,7 @@ package pt.up.fe.comp.jasmin;
 
 import org.specs.comp.ollir.*;
 import pt.up.fe.specs.util.SpecsIo;
+import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
 import java.util.Locale;
@@ -84,9 +85,11 @@ public class OllirToJasmin {
         // Method return type
         code.append(methodParamTypes).append(")").append(getJasminType(method.getReturnType())).append("\n");
 
+        code.append(".limit stack 99\n").append(".limit locals 99\n");
+
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
-
+            code.append(getCode(instruction));
         }
 
         code.append(".end method\n");
@@ -94,9 +97,49 @@ public class OllirToJasmin {
     }
 
     public String getCode(Instruction instruction) {
+        //FunctionClassMap<Instruction, String> instructionMap = new FunctionClassMap<>();
+        //instructionMap.put(CallInstruction.class, this.getCode());
+
+        if (instruction instanceof CallInstruction) {
+            return getCode((CallInstruction)instruction);
+        }
+
+        throw new NotImplementedException(instruction.getClass());
+    }
+
+    public String getCode(CallInstruction callInstruction) {
+
+        switch (callInstruction.getInvocationType()) {
+            case invokestatic:
+                return getCodeInvokeStatic(callInstruction);
+            default: {
+                throw new NotImplementedException(callInstruction.getInvocationType());
+            }
+        }
+
+    }
+
+    public String getCodeInvokeStatic(CallInstruction instruction) {
         StringBuilder code = new StringBuilder();
 
+        code.append("invokestatic ");
+
+        var methodClass = ((Operand) instruction.getFirstArg()).getName();
+        code.append(getFullyQualifiedName(methodClass));
+        code.append("/");
+        code.append(((LiteralElement) instruction.getSecondArg()).getLiteral());
+        code.append("(");
+        for (var operand : instruction.getListOfOperands()) {
+            getArgumentCode(operand);
+        }
+        code.append(")");
+        code.append(getJasminType(instruction.getReturnType()));
+
         return code.toString();
+    }
+
+    private void getArgumentCode(Element operand) {
+        throw new NotImplementedException(this);
     }
 
     public String getJasminType(Type type) {
