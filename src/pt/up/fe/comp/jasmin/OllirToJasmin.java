@@ -54,7 +54,9 @@ public class OllirToJasmin {
 
         // Methods
         for (Method method : this.classUnit.getMethods()) {
-            code.append(this.getCode(method));
+            if (!method.isConstructMethod()) {
+                code.append(this.getCode(method));
+            }
         }
 
         return code.toString();
@@ -78,7 +80,7 @@ public class OllirToJasmin {
         code.append(method.getMethodName()).append("(");
 
         // Method parameters
-        var methodParamTypes = method.getParams().stream()
+        String methodParamTypes = method.getParams().stream()
                 .map(element -> getJasminType(element.getType()))
                 .collect(Collectors.joining());
 
@@ -124,7 +126,7 @@ public class OllirToJasmin {
         StringBuilder code = new StringBuilder();
 
         code.append("\tinvokestatic ");
-
+        System.out.println();
         var methodClass = ((Operand) instruction.getFirstArg()).getName();
         code.append(getFullyQualifiedName(methodClass));
         code.append("/");
@@ -136,6 +138,14 @@ public class OllirToJasmin {
         code.append(")");
         code.append(getJasminType(instruction.getReturnType()));
         code.append("\n");
+
+        return code.toString();
+    }
+
+    public String getCodeInvokeSpecial(CallInstruction instruction) {
+        StringBuilder code = new StringBuilder();
+
+        code.append("\tinvokespecial");
 
         return code.toString();
     }
