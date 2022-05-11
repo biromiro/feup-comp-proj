@@ -1,6 +1,8 @@
 package pt.up.fe.comp.jasmin;
 
+import com.javacc.parser.tree.ReturnType;
 import org.specs.comp.ollir.*;
+import pt.up.fe.comp.VOID;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
@@ -11,9 +13,11 @@ import java.util.stream.Collectors;
 public class OllirToJasmin {
 
     private final ClassUnit classUnit;
+    private final int stackCounter;
 
     public OllirToJasmin(ClassUnit classUnit) {
         this.classUnit = classUnit;
+        this.stackCounter = 0;
     }
 
     public String getFullyQualifiedName(String className) {
@@ -56,6 +60,7 @@ public class OllirToJasmin {
         for (Method method : this.classUnit.getMethods()) {
             if (!method.isConstructMethod()) {
                 code.append(this.getCode(method));
+
             }
         }
 
@@ -91,7 +96,12 @@ public class OllirToJasmin {
 
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
+            System.out.println("instruction " + instruction.toString());
             code.append(getCode(instruction));
+        }
+
+        if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
+            code.append("\treturn\n");
         }
 
         code.append(".end method\n");
@@ -103,23 +113,36 @@ public class OllirToJasmin {
         //instructionMap.put(CallInstruction.class, this.getCode());
 
         if (instruction instanceof CallInstruction) {
-            return getCode((CallInstruction)instruction);
+            return getCode((CallInstruction) instruction);
+        }
+        if (instruction instanceof ReturnInstruction) {
+            return getCode((ReturnInstruction) instruction);
+        }
+        if (instruction instanceof AssignInstruction) {
+            return getCode((AssignInstruction) instruction);
         }
 
         throw new NotImplementedException(instruction.getClass());
     }
 
     public String getCode(CallInstruction callInstruction) {
-
         switch (callInstruction.getInvocationType()) {
             case invokestatic:
                 return getCodeInvokeStatic(callInstruction);
             default: {
-                //throw new NotImplementedException(callInstruction.getInvocationType());
-                return "";
+                throw new NotImplementedException(callInstruction.getInvocationType());
+                //return "";
             }
         }
+    }
 
+    public String getCode(AssignInstruction assignInstruction) {
+        StringBuilder code = new StringBuilder();
+
+        Element operand = assignInstruction.getDest();
+        System.out.println("Here " + operand.toString());
+
+        return code.toString();
     }
 
     public String getCodeInvokeStatic(CallInstruction instruction) {
@@ -142,10 +165,8 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String getCodeInvokeSpecial(CallInstruction instruction) {
+    public String getCode(ReturnInstruction returnInstruction) {
         StringBuilder code = new StringBuilder();
-
-        code.append("\tinvokespecial");
 
         return code.toString();
     }

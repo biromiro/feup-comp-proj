@@ -8,6 +8,7 @@ public class JasminTest {
     public void test() {
         var jasminResult = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(jasminResult);
+        //jasminResult.compile();
         //jasminResult.run();
     }
 }
