@@ -85,7 +85,7 @@ public class OllirToJasmin {
         // Method return type
         code.append(methodParamTypes).append(")").append(getJasminType(method.getReturnType())).append("\n");
 
-        code.append(".limit stack 99\n").append(".limit locals 99\n");
+        code.append("\t.limit stack 99\n").append("\t.limit locals 99\n");
 
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
@@ -113,7 +113,8 @@ public class OllirToJasmin {
             case invokestatic:
                 return getCodeInvokeStatic(callInstruction);
             default: {
-                throw new NotImplementedException(callInstruction.getInvocationType());
+                //throw new NotImplementedException(callInstruction.getInvocationType());
+                return "";
             }
         }
 
@@ -122,18 +123,19 @@ public class OllirToJasmin {
     public String getCodeInvokeStatic(CallInstruction instruction) {
         StringBuilder code = new StringBuilder();
 
-        code.append("invokestatic ");
+        code.append("\tinvokestatic ");
 
         var methodClass = ((Operand) instruction.getFirstArg()).getName();
         code.append(getFullyQualifiedName(methodClass));
         code.append("/");
-        code.append(((LiteralElement) instruction.getSecondArg()).getLiteral());
+        code.append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
         code.append("(");
         for (var operand : instruction.getListOfOperands()) {
             getArgumentCode(operand);
         }
         code.append(")");
         code.append(getJasminType(instruction.getReturnType()));
+        code.append("\n");
 
         return code.toString();
     }
