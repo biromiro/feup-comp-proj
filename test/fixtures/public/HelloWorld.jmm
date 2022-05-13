@@ -2,27 +2,51 @@ import ioPlus;
 class HelloWorld {
     int a;
 
+    public int anew(int a) {
+        return a * 2;
+    }
+
     public int calc(int[] abc, boolean calc) {
         int[] d;
         int a;
+        boolean what;
         d = new int[abc.length + 2];
         abc = new int[3];
         abc[0] = 2;
         a = abc[1];
+        what = !calc && false;
+        calc = a < abc[0];
         return d.length;
+    }
+
+    public int[] getArray(int a, int b, int c) {
+        int[] d;
+        d = new int[3];
+        d[0] = a;
+        d[1] = b;
+        d[2] = c;
+        return d;
     }
 
 	public static void main(String[] args) {
 	    int a;
 	    int b;
 	    int c;
+	    int d;
 	    int[] julia;
-	    HelloWorld hello;
-	    hello =  new HelloWorld();
-	    a = 10*3-4+1;
-	    b = c + 3 * 2;
-	    c = a + c * 2 + 1;
-	    hello.calc(julia, true);
-		ioPlus.printHelloWorld();
+        HelloWorld hello;
+        hello =  new HelloWorld();
+        a = 10*3-4+1;
+        b = c + 3 * 2;
+        c = a + c * 2 + 1;
+        c = c / 2 + 3 * ( 2 + 1 * 3);
+        (julia)[0] = 2;
+        b = hello.calc(julia, b < 2+c);
+        hello.calc(julia, true);
+        this.calc(julia, false);
+        ioPlus.printHelloWorld();
+		c = this.anew((new HelloWorld()).anew(b + 4));
+		(new HelloWorld()).anew(2+3);
+		d = (new HelloWorld()).getArray(a,b,c/3+1)[0];
 	}
 }
