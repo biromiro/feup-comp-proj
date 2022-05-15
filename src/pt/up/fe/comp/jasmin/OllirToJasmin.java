@@ -1,12 +1,14 @@
 package pt.up.fe.comp.jasmin;
 
 import com.javacc.parser.tree.ReturnType;
+import com.sun.jdi.IntegerType;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.VOID;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,8 @@ public class OllirToJasmin {
     public OllirToJasmin(ClassUnit classUnit) {
         this.classUnit = classUnit;
         this.stackCounter = 0;
+
+        this.classUnit.buildVarTables();
     }
 
     public String getFullyQualifiedName(String className) {
@@ -92,40 +96,41 @@ public class OllirToJasmin {
         // Method return type
         code.append(methodParamTypes).append(")").append(getJasminType(method.getReturnType())).append("\n");
 
-        code.append("\t.limit stack 99\n").append("\t.limit locals 99\n");
+        code.append(".limit stack 99\n").append(".limit locals 99\n");
 
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
             System.out.println("instruction " + instruction.toString());
-            code.append(getCode(instruction));
+            code.append("");
+            code.append(getCode(method, instruction));
         }
 
         if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
-            code.append("\treturn\n");
+            code.append("return\n");
         }
 
         code.append(".end method\n");
         return code.toString();
     }
 
-    public String getCode(Instruction instruction) {
+    public String getCode(Method method, Instruction instruction) {
         //FunctionClassMap<Instruction, String> instructionMap = new FunctionClassMap<>();
         //instructionMap.put(CallInstruction.class, this.getCode());
 
         if (instruction instanceof CallInstruction) {
-            return getCode((CallInstruction) instruction);
+            return getCode(method, (CallInstruction) instruction);
         }
         if (instruction instanceof ReturnInstruction) {
-            return getCode((ReturnInstruction) instruction);
+            return getCode(method, (ReturnInstruction) instruction);
         }
         if (instruction instanceof AssignInstruction) {
-            return getCode((AssignInstruction) instruction);
+            return getCode(method, (AssignInstruction) instruction);
         }
 
         throw new NotImplementedException(instruction.getClass());
     }
 
-    public String getCode(CallInstruction callInstruction) {
+    public String getCode(Method method, CallInstruction callInstruction) {
         switch (callInstruction.getInvocationType()) {
             case invokestatic:
                 return getCodeInvokeStatic(callInstruction);
@@ -136,19 +141,148 @@ public class OllirToJasmin {
         }
     }
 
-    public String getCode(AssignInstruction assignInstruction) {
+    public String getCode(Method method, AssignInstruction assignInstruction) {
         StringBuilder code = new StringBuilder();
 
-        Element operand = assignInstruction.getDest();
-        System.out.println("Here " + operand.toString());
+        Element lhs = assignInstruction.getDest();
+        Instruction rhs = assignInstruction.getRhs();
+        var table = method.getVarTable();
+        System.out.println("Here " + lhs.toString());
+        System.out.println("Rhs: " + rhs.toString());
+        String rhsString = getOperand(table, rhs);
+
+        //store to lhs
+        code.append(getStore(lhs, rhsString, method.getVarTable()));
 
         return code.toString();
+    }
+
+    private String getStore(Element lhs, String rhs, HashMap<String, Descriptor> table) {
+        StringBuilder code = new StringBuilder();
+        ElementType type = lhs.getType().getTypeOfElement();
+
+        if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
+            int register = table.get(((Operand) lhs).getName()).getVirtualReg();
+            return rhs + istore(register);
+        }
+
+        return "";
+    }
+
+    private String istore(int register) {
+        String instruction = "istore";
+        if (register >= 0 && register <= 3) {
+            instruction = instruction + "_";
+        }
+        else {
+            instruction = instruction + " ";
+        }
+        return instruction + register + "\n";
+    }
+
+    private String getOperand(HashMap<String, Descriptor> table, Instruction instruction) {
+        switch (instruction.getInstType()) {
+            case NOPER -> {
+                return getNoper(table, (SingleOpInstruction) instruction);
+            }
+            case BINARYOPER -> {
+                return getBinaryOper(table, (BinaryOpInstruction) instruction);
+            }
+            default -> {
+                return "\n";
+            }
+        }
+    }
+
+    private String getBinaryOper(HashMap<String, Descriptor> table, BinaryOpInstruction instruction) {
+        StringBuilder code = new StringBuilder();
+        Element lhs = instruction.getLeftOperand();
+        Element rhs = instruction.getRightOperand();
+
+        String leftLoad = getLoad(table, lhs);
+        String rightLoad = getLoad(table, rhs);
+        OperationType type = instruction.getOperation().getOpType();
+
+        //grammar accepts &&, ! and <
+        boolean isBooleanOp = type == OperationType.ANDB || type == OperationType.NOTB || type == OperationType.LTH;
+
+        if (!isBooleanOp) {
+            code.append(leftLoad);
+            code.append(rightLoad);
+            code.append(getArithmetic(type));
+        }
+        return code.toString();
+    }
+
+    private String getArithmetic(OperationType type) {
+        return switch (type) {
+            case ADD -> "iadd\n";
+            case SUB -> "isub\n";
+            case MUL -> "imul\n";
+            case DIV -> "idiv\n";
+            default -> "";
+        };
+    }
+
+    private String getNoper(HashMap<String, Descriptor> table, SingleOpInstruction instruction) {
+        Element element = instruction.getSingleOperand();
+        return getLoad(table, element);
+    }
+
+    private String getLoad(HashMap<String, Descriptor> table, Element element) {
+        ElementType type = element.getType().getTypeOfElement();
+
+        // instruction of the iconst family
+        if (element.isLiteral()) {
+            System.out.println("hit iconst");
+            return iconst(((LiteralElement) element).getLiteral());
+        }
+
+        //instruction of the iload family
+        if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
+            System.out.println("hit iload");
+            int register = table.get(((Operand) element).getName()).getVirtualReg();
+            return iload(register);
+        }
+        return "";
+    }
+
+    private String iload(int register) {
+        String instruction = "iload";
+        if (register >= 0 && register <= 3) {
+            instruction = instruction + "_";
+        }
+        else {
+            instruction = instruction + " ";
+        }
+        return instruction + register + "\n";
+    }
+
+    private String iconst(String num) {
+        int integer = Integer.parseInt(num);
+        String instruction = "";
+        if (integer == -1) {
+            instruction = "iconst_m1";
+        }
+        else if (integer >= 0 && integer <= 5) {
+            instruction = "iconst_" + num;
+        }
+        else if (integer >= -128 && integer <= 127) {
+            instruction = "bipush " + num;
+        }
+        else if (integer >= -32768 && integer <= 32767) {
+            instruction = "sipush " + num;
+        }
+        else {
+            instruction = "ldc " + num;
+        }
+        return instruction + "\n";
     }
 
     public String getCodeInvokeStatic(CallInstruction instruction) {
         StringBuilder code = new StringBuilder();
 
-        code.append("\tinvokestatic ");
+        code.append("invokestatic ");
         System.out.println();
         var methodClass = ((Operand) instruction.getFirstArg()).getName();
         code.append(getFullyQualifiedName(methodClass));
@@ -165,8 +299,21 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String getCode(ReturnInstruction returnInstruction) {
+    public String getCode(Method method, ReturnInstruction returnInstruction) {
+        if(!returnInstruction.hasReturnValue())
+            return "return\n";
+
         StringBuilder code = new StringBuilder();
+
+        Element result = returnInstruction.getOperand();
+        code.append(getLoad(method.getVarTable(), result));
+        ElementType type = result.getType().getTypeOfElement();
+        if(type == ElementType.INT32 || type == ElementType.BOOLEAN) {
+            code.append("ireturn\n");
+        }
+        else {
+            code.append("areturn\n");
+        }
 
         return code.toString();
     }
