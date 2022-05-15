@@ -21,6 +21,10 @@ public class OllirUtils {
         return "temp_" + value + "." + getCode(type);
     }
 
+    public static String getTempCode(Symbol symbol, String index) {
+        return "temp_" + symbol.getName() + "[" + index + "]." + getCode(symbol.getType(), true);
+    }
+
     public static String getCode(Type type, Boolean indexed) {
         StringBuilder code = new StringBuilder();
 
