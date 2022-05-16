@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable, List<Report>> {
@@ -35,7 +36,6 @@ public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable
 
     private List<Report> visitImport(JmmNode jmmNode, ConcreteSymbolTable table) {
         List<Report> reports = new ArrayList<>();
-        // TODO what should happen if two different imports to the same classname (e.g. import math.Vector and import graphics.Vector)
         StringBuilder importPath = new StringBuilder();
         for (JmmNode child: jmmNode.getChildren()) {
             importPath.append(child.get("path"));
@@ -43,8 +43,19 @@ public class ConstructSymbolTableVisitor extends AJmmVisitor<ConcreteSymbolTable
         }
 
         importPath.deleteCharAt(importPath.length()-1);
-        if (!table.getImports().contains(importPath.toString())) {
-            table.addImport(importPath.toString());
+        String importPathString = importPath.toString();
+        if (!table.getImports().contains(importPathString)) {
+            String lastName = importPathString.substring(importPathString.lastIndexOf('.') + 1);
+            Optional<String> match = table
+                    .getImports()
+                    .stream()
+                    .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals(lastName))
+                    .findAny();
+            if (match.isPresent()) {
+                reports.add(ReportUtils.alreadyImported(jmmNode, lastName, match.get()));
+                return reports;
+            }
+            table.addImport(importPathString);
         }
 
         return reports;

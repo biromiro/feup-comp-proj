@@ -86,6 +86,7 @@ public class Launcher {
         Analyser analyser =  new Analyser();
         JmmSemanticsResult analysisResult = analyser.semanticAnalysis(parserResult);
         System.out.println(analysisResult.getSymbolTable().print());
+        System.out.println(analysisResult.getSymbolTable().print());
         System.out.println(analysisResult.getRootNode().toTree());
         TestUtils.noErrors(analysisResult.getReports());
 

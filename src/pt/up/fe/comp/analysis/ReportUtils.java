@@ -97,4 +97,24 @@ public class ReportUtils {
 
         return baseReport(at, ReportType.ERROR, Stage.SEMANTIC, message.toString());
     }
+
+    public static Report ambiguousMethodCallReport(JmmNode at, String methodname) {
+        StringBuilder message = new StringBuilder();
+        message.append("reference to ");
+        message.append(methodname);
+        message.append(" is ambiguous");
+
+        return baseReport(at, ReportType.ERROR, Stage.SEMANTIC, message.toString());
+    }
+
+    public static Report alreadyImported(JmmNode at, String lastName, String other) {
+        StringBuilder message = new StringBuilder();
+        message.append("a type with the same simple name '");
+        message.append(lastName);
+        message.append("' has already been imported from '");
+        message.append(other);
+        message.append("'");
+
+        return baseReport(at, ReportType.ERROR, Stage.SEMANTIC, message.toString());
+    }
 }

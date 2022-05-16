@@ -14,7 +14,7 @@ class A {
 		b = new B();
 		
 		// A does not extend B
-		a = b;
+		b = a;
 		
 		return a;
 	}
