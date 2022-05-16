@@ -150,8 +150,6 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
 
     private String varDeclarationVisit(JmmNode variableDeclaration, Option option) {
 
-        // TODO: check if private or package private
-
         if(!variableDeclaration.getJmmParent().getKind().equals("ClassDeclaration"))
             return "";
 
