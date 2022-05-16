@@ -1,52 +1,105 @@
-import ioPlus;
+import A;
+import B;
 class HelloWorld {
-    int a;
+    int fora;
+    int dentrofora;
+    int parametrofora;
 
-    public int anew(int a) {
-        return a * 2;
+    // Indexing on a new array. 2 errors: index not appearing; new is inlined
+    public int teste1() {
+        (new int[3])[0] = 5;
+        return 0;
+    }
+    // Returning new object or new array. error: new is inlined
+    public A teste2a() {
+        return new A();
+    }
+    public int[] teste2b() {
+        return new int[5];
+    }
+    public int teste2c() {
+        return (new int[5]).length;
     }
 
-    public int calc(int[] abc, boolean calc) {
-        int[] d;
-        int a;
-        boolean what;
-        d = new int[abc.length + 2];
-        abc = new int[3];
-        abc[0] = 2;
-        a = abc[1];
-        what = !calc && false;
-        calc = a < abc[0];
-        return d.length;
+    // New array as argument. error: new is inlined
+    public int teste3_aux(int[] a) { return 0; }
+    public int teste3() {
+        return this.teste3_aux(new int[3]);
     }
 
-    public int[] getArray(int a, int b, int c) {
-        int[] d;
-        d = new int[3];
-        d[0] = a;
-        d[1] = b;
-        d[2] = c;
-        return d;
+    // Fields vs local variables
+    public int teste4(int parametro, int parametrofora) {
+        int dentro;
+        int dentrofora;
+        int esquerdo;
+
+        fora = 5; // GERA OLLIR INCORRETO putfield
+        dentro = 5; // OK assign normal
+        parametro = 5; // OK assign com parametro
+        dentrofora = 5; // OK assign normal
+        parametrofora = 5; // OK assign com parametro
+
+        esquerdo = fora; // GERA OLLIR INCORRETO
+        esquerdo = dentro; // OK
+        esquerdo = parametro; // OK
+        esquerdo = dentrofora; // OK
+        esquerdo = parametrofora; // OK
+
+        return 0;
     }
 
-	public static void main(String[] args) {
-	    int a;
-	    int b;
-	    int c;
-	    int d;
-	    int[] julia;
-        HelloWorld hello;
-        hello =  new HelloWorld();
-        a = 10*3-4+1;
-        b = c + 3 * 2;
-        c = a + c * 2 + 1;
-        c = c / 2 + 3 * ( 2 + 1 * 3);
-        (julia)[0] = 2;
-        b = hello.calc(julia, b < 2+c);
-        hello.calc(julia, true);
-        this.calc(julia, false);
-        ioPlus.printHelloWorld();
-		c = this.anew((new HelloWorld()).anew(b + 4));
-		(new HelloWorld()).anew(2+3);
-		d = (new HelloWorld()).getArray(a,b,c/3+1)[0];
-	}
+    // A extends B or B extends A. How to convert between A and B?
+    public int duvida1_aux(B b) { return 0; }
+    public int duvida1a() {
+        this.duvida1_aux(new A());
+        /*
+         * temp_0.A :=.A new(A).A;
+         *
+         * should it be:
+         * invokevirtual(this, "duvida1_aux", temp_0.A).i32;
+         * OR
+         * invokevirtual(this, "duvida1_aux", temp_0.B).i32;
+         */
+
+        return 0;
+    }
+    public int duvida1b() {
+        A a;
+        a = new B();
+        /*
+         * should it be:
+         * var_a.A :=.A new(B).B;
+         * OR
+         * var_a.A :=.A new(B).A;
+         */
+
+        return 0;
+    }
+    public A duvida1c() {
+        B b;
+        return b;
+        /*
+         * should it be:
+         * et.B var_b.B;
+         * OR
+         * et.A var_b.A;
+         */
+    }
+
+    // Do we need to catch these cases in the semantic analysis?
+    public int duvida2() {
+        HelloWorld hw;
+        int [] a;
+        //this = hw;
+        //(new int[1]) = a;
+        return 0;
+    }
+
+    // The method temp variable just vanishes? lol
+    public int teste5_aux() { return 0; }
+    public int teste5() {
+        return this.teste5_aux() + 5;
+    }
+
+    public static void main(String[] args) {}
 }
