@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class OllirGenerator extends AJmmVisitor<Option, String> {
+public class OllirGenerator extends AJmmVisitor<Action, String> {
     private final StringBuilder ollirCode;
     private final SymbolTable symbolTable;
     private int temporaryVarCounter = 0;
@@ -48,41 +48,77 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
     }
 
     private Symbol getNextTempSymbol(Type type) {
-        StringBuilder temp = new StringBuilder();
-        temp.append(temporaryVarCounter++);
-        return new Symbol(type, temp.toString());
+        return new Symbol(type, String.valueOf(temporaryVarCounter++));
     }
 
     private String getNextTemp(Type type) {
-        StringBuilder temp = new StringBuilder();
-        temp.append(temporaryVarCounter++);
-        return OllirUtils.getTempCode(temp.toString(), type);
+        return OllirUtils.getTempCode(String.valueOf(temporaryVarCounter++), type);
     }
 
-    private String programVisit(JmmNode program, Option option) {
+    private String programVisit(JmmNode program, Action action) {
         for(String importString: symbolTable.getImports()) {
             ollirCode.append("import ").append(importString).append(";\n");
         }
 
         for(JmmNode child: program.getChildren()) {
-            visit(child, new Option());
+            visit(child, new Action());
         }
         return "";
     }
 
     private String emptyConstructor() {
-        StringBuilder emptyConstructor = new StringBuilder();
 
-        emptyConstructor.append(".construct ")
-                .append(symbolTable.getClassName())
-                .append("().V {\n")
-                .append("invokespecial(this, \"<init>\").V;\n")
-                .append("}\n\n");
-
-        return emptyConstructor.toString();
+        final String emptyConstructor = ".construct " +
+                symbolTable.getClassName() +
+                "().V {\n" +
+                "invokespecial(this, \"<init>\").V;\n" +
+                "}\n\n";
+        return emptyConstructor;
     }
 
-    private String classDeclarationVisit(JmmNode classDeclaration, Option option) {
+    private boolean isLocalVariable(JmmNode identifier) {
+        if (!identifier.getKind().equals("Identifier")) return false;
+
+        String methodSignature = identifier
+                .getAncestor("MethodDef")
+                .or(() -> identifier.getAncestor("MainMethodDef"))
+                .get()
+                .get("signature");
+
+        return symbolTable.getLocalVariables(methodSignature).
+                contains(new Symbol(AnalysisUtils.getType(identifier), identifier.get("name")));
+    }
+
+    private int getArgumentVariableIndex(JmmNode identifier) {
+        if (!identifier.getKind().equals("Identifier")
+                && !isLocalVariable(identifier)) return -1;
+
+        String methodSignature = identifier
+                .getAncestor("MethodDef")
+                .or(() -> identifier.getAncestor("MainMethodDef"))
+                .get()
+                .get("signature");
+
+        return symbolTable.getParameters(methodSignature).indexOf(
+                new Symbol(AnalysisUtils.getType(identifier), identifier.get("name"))
+                );
+    }
+
+    private boolean isClassVariable(JmmNode identifier) {
+
+        if (!identifier.getKind().equals("Identifier")) return false;
+
+        int index = symbolTable.getFields().indexOf(
+                new Symbol(AnalysisUtils.getType(identifier), identifier.get("name"))
+        );
+
+        return !isLocalVariable(identifier) &&
+                getArgumentVariableIndex(identifier) == -1 &&
+                index != -1;
+
+    }
+
+    private String classDeclarationVisit(JmmNode classDeclaration, Action action) {
 
         ollirCode.append(symbolTable.getClassName());
 
@@ -104,7 +140,7 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                 insertedConstructor = true;
             }
 
-            visit(child, option);
+            visit(child, action);
         }
 
         ollirCode.append("}\n");
@@ -112,7 +148,7 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         return "";
     }
 
-    private String methodDefVisit(JmmNode method, Option option) {
+    private String methodDefVisit(JmmNode method, Action action) {
 
         String methodSignature = method.get("signature");
 
@@ -120,12 +156,12 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
 
         if(method.getKind().equals("MainMethodDef")) ollirCode.append("static ");
 
-        ollirCode.append(method.get("name") + "(");
+        ollirCode.append(method.get("name")).append("(");
 
         List<Symbol> parameters = symbolTable.getParameters(methodSignature);
 
         String parametersCode = parameters.stream()
-                .map(symbol -> OllirUtils.getCode(symbol))
+                .map(OllirUtils::getCode)
                 .collect(Collectors.joining(", "));
 
         ollirCode.append(parametersCode)
@@ -137,7 +173,7 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         for (JmmNode methodChild: method.getChildren()) {
             if (methodChild.getKind().equals("MethodBody")) {
                 for(JmmNode child: methodChild.getChildren()) {
-                    visit(child, option);
+                    visit(child, action);
                 }
                 break;
             }
@@ -148,7 +184,7 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         return "";
     }
 
-    private String varDeclarationVisit(JmmNode variableDeclaration, Option option) {
+    private String varDeclarationVisit(JmmNode variableDeclaration, Action action) {
 
         if(!variableDeclaration.getJmmParent().getKind().equals("ClassDeclaration"))
             return "";
@@ -163,26 +199,35 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         return "";
     }
 
-    private String assignmentVisit(JmmNode assignment, Option option) {
+    private String assignmentVisit(JmmNode assignment, Action action) {
 
         JmmNode identifier = assignment.getJmmChild(0);
-        String lhs = visit(identifier, option);
-        String rhs = visit(assignment.getJmmChild(1), new Option(TypeDecl.ASSIGNMENT));
+        String rhs = visit(assignment.getJmmChild(1), new Action(ActionType.RET_VAL));
 
-        ollirCode.append(lhs)
-                .append(" :=.")
-                .append(OllirUtils.getCode(AnalysisUtils.getType(identifier)))
-                .append(" ")
-                .append(rhs)
-                .append(";\n");
+        if (isClassVariable(identifier)) {
+            String lhs = visit(identifier, new Action(ActionType.ASSIGN_TO_FIELD));
+            ollirCode.append("putfield(this,")
+                    .append(lhs)
+                    .append(",")
+                    .append(rhs)
+                    .append(").V;\n");
+        } else {
+            String lhs = visit(identifier, action);
+            ollirCode.append(lhs)
+                    .append(" :=.")
+                    .append(OllirUtils.getCode(AnalysisUtils.getType(identifier)))
+                    .append(" ")
+                    .append(rhs)
+                    .append(";\n");
+        }
 
         return "";
     }
 
-    private String binaryOpVisit(JmmNode jmmNode, Option option) {
+    private String binaryOpVisit(JmmNode jmmNode, Action action) {
 
-        String lhs = visit(jmmNode.getJmmChild(0), option);
-        String rhs = visit(jmmNode.getJmmChild(1), option);
+        String lhs = visit(jmmNode.getJmmChild(0), action);
+        String rhs = visit(jmmNode.getJmmChild(1), new Action(ActionType.SAVE_TO_TMP));
         Type tempType = AnalysisUtils.getType(jmmNode);
         String temp =  getNextTemp(tempType);
 
@@ -201,15 +246,15 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         return temp;
     }
 
-    private String terminalVisit(JmmNode terminalNode, Option option) {
+    private String terminalVisit(JmmNode terminalNode, Action action) {
         return OllirUtils.getCode(terminalNode.get("val"),
                 AnalysisUtils.getType(terminalNode));
     }
 
-    private String returnStatementVisit(JmmNode jmmNode, Option option) {
+    private String returnStatementVisit(JmmNode jmmNode, Action action) {
         JmmNode returnNode = jmmNode.getJmmChild(0);
         Type returnType = AnalysisUtils.getType(returnNode);
-        String returnVal = visit(returnNode, option);
+        String returnVal = visit(returnNode, new Action(ActionType.SAVE_TO_TMP));
 
         ollirCode.append("ret.")
                 .append(OllirUtils.getCode(returnType))
@@ -221,18 +266,18 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
     }
 
 
-    private String methodCallVisit(JmmNode method, Option option) {
+    private String methodCallVisit(JmmNode method, Action action) {
 
         JmmNode identifier = method.getJmmChild(0);
         JmmNode methodArguments = method.getJmmChild(1);
         Optional<String> type = identifier.getOptional("type");
         StringBuilder call = new StringBuilder();
-        String id = visit(identifier, new Option(TypeDecl.ARGUMENT));
-        String args = visit(methodArguments, option);
+        String id = visit(identifier, new Action(ActionType.SAVE_TO_TMP));
+        String args = visit(methodArguments, action);
 
         if (type.isPresent()) {
             call.append("invokevirtual(");
-        } else if (type.isEmpty()) {
+        } else {
             call.append("invokestatic(");
         }
 
@@ -243,10 +288,10 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                 .append(").")
                 .append(OllirUtils.getCode(AnalysisUtils.getType(method)));
 
-        if (option.getType() == TypeDecl.ASSIGNMENT) {
+        if (action.getAction() == ActionType.RET_VAL) {
             return call.toString();
 
-        } else if (option.getType() == TypeDecl.ARGUMENT) {
+        } else if (action.getAction() == ActionType.SAVE_TO_TMP) {
             Type callType = AnalysisUtils.getType(method);
             String temp =  getNextTemp(callType);
 
@@ -258,8 +303,7 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                     .append(";\n");
 
             return temp;
-        } else if (option.getType() == TypeDecl.INDEXING) {
-
+        } else if (action.getAction() == ActionType.SAVE_FOR_IDX) {
             Type callType = AnalysisUtils.getType(method);
             Symbol tempSymbol = getNextTempSymbol(callType);
             String temp = OllirUtils.getTempCode(tempSymbol.getName(), tempSymbol.getType());
@@ -271,7 +315,8 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                     .append(call.toString())
                     .append(";\n");
 
-            return OllirUtils.getTempCode(tempSymbol, option.getContext());
+            return OllirUtils.getTempCode(tempSymbol, action.getContext());
+
         }
 
         ollirCode.append(call.toString())
@@ -279,13 +324,13 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         return "";
     }
 
-    private String methodArgumentsVisit(JmmNode arguments, Option typeOfCall) {
+    private String methodArgumentsVisit(JmmNode arguments, Action typeOfCall) {
 
         List<String> string_args = new ArrayList<>();
         StringBuilder args = new StringBuilder();
 
         for(JmmNode child: arguments.getChildren()) {
-            string_args.add(visit(child, new Option(TypeDecl.ARGUMENT)));
+            string_args.add(visit(child, new Action(ActionType.SAVE_TO_TMP)));
         }
 
         for(String arg: string_args) {
@@ -296,9 +341,9 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
     }
 
 
-    private String newIntArrayVisit(JmmNode jmmNode, Option option) {
+    private String newIntArrayVisit(JmmNode jmmNode, Action action) {
 
-        String arrVal = visit(jmmNode.getJmmChild(0), option);
+        String arrVal = visit(jmmNode.getJmmChild(0), action);
         StringBuilder newIntArray = new StringBuilder();
         Type arrayType = AnalysisUtils.getType(jmmNode);
 
@@ -307,13 +352,25 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                 .append(").")
                 .append(OllirUtils.getCode(arrayType));
 
-        return newIntArray.toString();
+        if (action.getAction() != ActionType.SAVE_TO_TMP) {
+            return newIntArray.toString();
+        }
+
+        String temp =  getNextTemp(arrayType);
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(arrayType))
+                .append(" ")
+                .append(newIntArray)
+                .append(";\n");
+
+        return temp;
 
     }
 
-    private String lengthCallVisit(JmmNode jmmNode, Option option) {
+    private String lengthCallVisit(JmmNode jmmNode, Action action) {
 
-        String callee = visit(jmmNode.getJmmChild(0), option);
+        String callee = visit(jmmNode.getJmmChild(0), action);
         Type callType = AnalysisUtils.getType(jmmNode);
         String temp =  getNextTemp(callType);
 
@@ -332,13 +389,14 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
     }
 
 
-    private String indexingVisit(JmmNode jmmNode, Option option) {
+    private String indexingVisit(JmmNode jmmNode, Action action) {
 
         JmmNode identifier = jmmNode.getJmmChild(0);
-        String indexValue = visit(jmmNode.getJmmChild(1), option);
+        String indexValue = visit(jmmNode.getJmmChild(1), action);
         Type indexType = AnalysisUtils.getType(jmmNode);
 
-        String indexTemp = getNextTemp(indexType);
+        Symbol tempSymbol = getNextTempSymbol(indexType);
+        String indexTemp = OllirUtils.getTempCode(tempSymbol.getName(), tempSymbol.getType());
 
         ollirCode.append(indexTemp)
                 .append(" :=.")
@@ -347,10 +405,29 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                 .append(indexValue)
                 .append(";\n");
 
-        return visit(identifier, new Option(TypeDecl.INDEXING, indexTemp));
+        if (identifier.getKind().equals("Identifier"))
+            return visit(identifier, new Action(ActionType.SAVE_FOR_IDX, indexTemp));
+
+        String identifierVal = visit(identifier, action);
+        Type identifierType = AnalysisUtils.getType(identifier);
+        Symbol tempIDSymbol = getNextTempSymbol(identifierType);
+        String temp = OllirUtils.getTempCode(tempIDSymbol.getName(), tempIDSymbol.getType());
+
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(indexType))
+                .append(" ")
+                .append(identifierVal)
+                .append(";\n");
+
+        return OllirUtils.getTempCode(
+                new Symbol(identifierType,
+                        tempIDSymbol.getName()
+                ), indexTemp);
+
     }
 
-    private String newObjectVisit(JmmNode jmmNode, Option option) {
+    private String newObjectVisit(JmmNode jmmNode, Action action) {
 
         StringBuilder newObj = new StringBuilder();
         Type objType = AnalysisUtils.getType(jmmNode);
@@ -360,61 +437,74 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
                 .append(").")
                 .append(OllirUtils.getCode(objType));
 
-        if (option.getType() == TypeDecl.ARGUMENT) {
-            Type callType = AnalysisUtils.getType(jmmNode);
-            String temp =  getNextTemp(callType);
-
-            ollirCode.append(temp)
-                    .append(" :=.")
-                    .append(OllirUtils.getCode(callType))
-                    .append(" ")
-                    .append(newObj)
-                    .append(";\n");
-
-            return temp;
+        if (action.getAction() != ActionType.SAVE_TO_TMP) {
+            return newObj.toString();
         }
 
-        return newObj.toString();
+        Type callType = AnalysisUtils.getType(jmmNode);
+        String temp =  getNextTemp(callType);
+
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(callType))
+                .append(" ")
+                .append(newObj)
+                .append(";\n");
+
+        return temp;
 
     }
 
-    private String identifierVisit(JmmNode identifier, Option indexing) {
+    private String identifierVisit(JmmNode identifier, Action action) {
 
         Optional<String> type = identifier.getOptional("type");
 
         if (type.isEmpty()) return identifier.get("name");
 
-        String methodSignature = identifier
-                .getAncestor("MethodDef")
-                .or(() -> identifier.getAncestor("MainMethodDef"))
-                .get()
-                .get("signature");
-
-        int index = symbolTable.getParameters(methodSignature).indexOf(
-                new Symbol(AnalysisUtils.getType(identifier), identifier.get("name"))
-        );
-
         StringBuilder parameterPrefix = new StringBuilder();
+
+        int index = getArgumentVariableIndex(identifier);
 
         if (index != -1) {
             parameterPrefix.append("$").append(index + 1).append(".");
         }
 
-        if (indexing.getType() == TypeDecl.INDEXING) {
+        if (isClassVariable(identifier) && action.getAction() != ActionType.ASSIGN_TO_FIELD) {
+            Type identifierType = AnalysisUtils.getType(identifier);
+            String identifierVal = OllirUtils.getCode(
+                    new Symbol(AnalysisUtils.getType(identifier),
+                            identifier.get("name")
+                    ));
+
+            String temp =  getNextTemp(identifierType);
+
+            ollirCode.append(temp)
+                    .append(" :=.")
+                    .append(OllirUtils.getCode(identifierType))
+                    .append(" getfield(this, ")
+                    .append(identifierVal)
+                    .append(").")
+                    .append(OllirUtils.getCode(identifierType))
+                    .append(";\n");
+
+            return temp;
+        }
+
+        if (action.getAction() != ActionType.SAVE_FOR_IDX) {
             return parameterPrefix.toString() + OllirUtils.getCode(
                     new Symbol(AnalysisUtils.getType(identifier),
                             identifier.get("name")
-                    ), indexing.getContext());
+                    ));
         }
-
-        return parameterPrefix.toString() + OllirUtils.getCode(
+        return parameterPrefix + OllirUtils.getCode(
                 new Symbol(AnalysisUtils.getType(identifier),
                         identifier.get("name")
-                ));
+                ), action.getContext());
+
     }
 
-    private String notExpressionVisit(JmmNode jmmNode, Option option) {
-        String callee = visit(jmmNode.getJmmChild(0), option);
+    private String notExpressionVisit(JmmNode jmmNode, Action action) {
+        String callee = visit(jmmNode.getJmmChild(0), action);
         Type callType = AnalysisUtils.getType(jmmNode);
         String temp =  getNextTemp(callType);
 
@@ -433,7 +523,7 @@ public class OllirGenerator extends AJmmVisitor<Option, String> {
         return temp;
     }
 
-    private String thisKeywordVisit(JmmNode jmmNode, Option s) {
+    private String thisKeywordVisit(JmmNode jmmNode, Action s) {
         return "this";
     }
 
