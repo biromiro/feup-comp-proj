@@ -8,6 +8,7 @@ import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -15,12 +16,9 @@ import java.util.stream.Collectors;
 public class OllirToJasmin {
 
     private final ClassUnit classUnit;
-    private final int stackCounter;
 
     public OllirToJasmin(ClassUnit classUnit) {
         this.classUnit = classUnit;
-        this.stackCounter = 0;
-
         this.classUnit.buildVarTables();
     }
 
@@ -101,12 +99,7 @@ public class OllirToJasmin {
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
             System.out.println("instruction " + instruction.toString());
-            code.append("");
             code.append(getCode(method, instruction));
-        }
-
-        if (method.getReturnType().getTypeOfElement() == ElementType.VOID) {
-            code.append("return\n");
         }
 
         code.append(".end method\n");
@@ -131,9 +124,14 @@ public class OllirToJasmin {
     }
 
     public String getCode(Method method, CallInstruction callInstruction) {
+        var table = method.getVarTable();
         switch (callInstruction.getInvocationType()) {
             case invokestatic:
                 return getCodeInvokeStatic(callInstruction);
+            case invokespecial:
+                return getCodeInvokeSpecial(callInstruction);
+            case invokevirtual:
+                return getCodeInvokeVirtual(callInstruction, table);
             default: {
                 throw new NotImplementedException(callInstruction.getInvocationType());
                 //return "";
@@ -238,13 +236,31 @@ public class OllirToJasmin {
             return iconst(((LiteralElement) element).getLiteral());
         }
 
-        //instruction of the iload family
+        // instruction of the iload family
         if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
             System.out.println("hit iload");
             int register = table.get(((Operand) element).getName()).getVirtualReg();
             return iload(register);
         }
+
+        // instruction of the aload family
+        if (type == ElementType.OBJECTREF || type == ElementType.ARRAYREF || type == ElementType.THIS) {
+            System.out.println("hit aload");
+            int register = table.get(((Operand) element).getName()).getVirtualReg();
+            return aload(register);
+        }
+        System.out.println("Here, type was " + type.name());
         return "";
+    }
+
+    private String aload(int register) {
+        String instruction = "aload";
+        if (register >= 0 && register <= 3) {
+            instruction = instruction + "_";
+        } else {
+            instruction = instruction + " ";
+        }
+        return instruction + register + "\n";
     }
 
     private String iload(int register) {
@@ -284,17 +300,43 @@ public class OllirToJasmin {
 
         code.append("invokestatic ");
         System.out.println();
-        var methodClass = ((Operand) instruction.getFirstArg()).getName();
+        String methodClass = ((Operand) instruction.getFirstArg()).getName();
         code.append(getFullyQualifiedName(methodClass));
         code.append("/");
         code.append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
-        code.append("(");
-        for (var operand : instruction.getListOfOperands()) {
-            getArgumentCode(operand);
-        }
-        code.append(")");
+        code.append(getArgumentsCode(instruction.getListOfOperands()));
         code.append(getJasminType(instruction.getReturnType()));
         code.append("\n");
+
+        return code.toString();
+    }
+
+    public String getCodeInvokeSpecial(CallInstruction instruction) {
+        StringBuilder code = new StringBuilder();
+        code.append("invokespecial java/lang/Object/<init>()V ; call super\n");
+        return code.toString();
+    }
+
+    public String getCodeInvokeVirtual(CallInstruction instruction, HashMap<String, Descriptor> table) {
+        StringBuilder code = new StringBuilder();
+        ArrayList<Element> parameters = instruction.getListOfOperands();
+        String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
+        String className = ((ClassType) instruction.getFirstArg().getType()).getName();
+        Type returnType = instruction.getReturnType();
+
+        code.append(getLoad(table, instruction.getFirstArg()));
+        for (Element parameter : parameters) {
+            code.append(getLoad(table, parameter));
+        }
+
+        code.append("invokevirtual ").append(className).append("/");
+        code.append(methodName.replace("\"", ""));
+        code.append(getArgumentsCode(parameters));
+        code.append(getJasminType(returnType));
+        code.append("\n");
+        System.out.println("now " + code.toString());
+        System.out.println("parameters: " + parameters);
+
 
         return code.toString();
     }
@@ -318,8 +360,14 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    private void getArgumentCode(Element operand) {
-        throw new NotImplementedException(this);
+    private String getArgumentsCode(ArrayList<Element> operands) {
+        StringBuilder code = new StringBuilder();
+        code.append("(");
+        for (Element argument : operands) {
+            code.append(getJasminType(argument.getType()));
+        }
+        code.append(")");
+        return code.toString();
     }
 
     public String getJasminType(Type type) {
@@ -331,19 +379,19 @@ public class OllirToJasmin {
 
     public String getJasminType(ElementType type) {
         switch (type) {
-            case INT32: {
+            case INT32 -> {
                 return "I";
             }
-            case STRING: {
+            case STRING -> {
                 return "Ljava/lang/String;";
             }
-            case VOID: {
+            case VOID -> {
                 return "V";
             }
-            case BOOLEAN: {
+            case BOOLEAN -> {
                 return "Z";
             }
-            default: {
+            default -> {
                 throw new NotImplementedException(type);
             }
         }
