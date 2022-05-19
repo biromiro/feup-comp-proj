@@ -437,10 +437,6 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                 .append(").")
                 .append(OllirUtils.getCode(objType));
 
-        if (action.getAction() != ActionType.SAVE_TO_TMP) {
-            return newObj.toString();
-        }
-
         Type callType = AnalysisUtils.getType(jmmNode);
         String temp =  getNextTemp(callType);
 
@@ -450,6 +446,10 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                 .append(" ")
                 .append(newObj)
                 .append(";\n");
+
+        ollirCode.append("invokespecial(")
+                .append(temp)
+                .append(",\"<init>\").V;\n");
 
         return temp;
 
