@@ -118,9 +118,11 @@ public class OllirToJasmin {
             return getCode(method, (AssignInstruction) instruction);
         }
         if (instruction instanceof GetFieldInstruction) {
+            System.out.println("FOUND GET FIELD");
             return getCode(method, (GetFieldInstruction) instruction);
         }
         if (instruction instanceof PutFieldInstruction) {
+            System.out.println("FOUND PUT FIELD");
             return getCode(method, (PutFieldInstruction) instruction);
         }
 
@@ -128,19 +130,22 @@ public class OllirToJasmin {
     }
 
     public String getCode(Method method, GetFieldInstruction fieldInstruction) {
+        System.out.println("FOUND GETFIELD");
         StringBuilder code = new StringBuilder();
         Element classElement = fieldInstruction.getFirstOperand();
         Element fieldElement = fieldInstruction.getSecondOperand();
+        //System.out.println("field name is " + ((Operand)fieldInstruction.getSecondOperand()).getName());
         code.append(getLoad(method.getVarTable(), classElement));
-
         code.append(getField(classElement, fieldElement));
         return code.toString();
     }
 
     private String getField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
-        String className = ((ClassType) classElement.getType()).getName();
-        System.out.println("field element " + fieldElement);
+        String fieldName = ((Operand)fieldElement).getName();
+        String className = ((Operand)classElement).getName();
+        code.append("getfield ").append(className).append("/")
+                .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
     }
 
@@ -171,15 +176,6 @@ public class OllirToJasmin {
         String returnType = ((ClassType)callInstruction.getReturnType()).getName();
         code.append(newCall(returnType)).append("\n");
         code.append("dup\n");
-        //code.append("invokespecial ").append(getFullyQualifiedName(returnType)).append("/<init>()V").append("\n");
-
-//        for (Element e : callInstruction.getListOfOperands()) {
-//            code.append(getLoad(table, e));
-//        }
-
-//        code.append("new ").append(((Operand) callInstruction.getFirstArg()).getName()).append("\n")
-//                .append("dup\n");
-
         return code.toString();
     }
 
@@ -254,6 +250,9 @@ public class OllirToJasmin {
             }
             case CALL -> {
                 return getCode(method, (CallInstruction) instruction);
+            }
+            case GETFIELD -> {
+                return getCode(method, (GetFieldInstruction) instruction);
             }
             default -> {
                 return "\n";
