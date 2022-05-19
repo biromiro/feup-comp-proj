@@ -149,8 +149,26 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String getCode(Method method, PutFieldInstruction fieldInstruction) {
+    private String putField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
+        String fieldName = ((Operand)fieldElement).getName();
+        String className = ((Operand)classElement).getName();
+        code.append("putfield ").append(className).append("/")
+                .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
+        return code.toString();
+    }
+
+    public String getCode(Method method, PutFieldInstruction fieldInstruction) {
+        System.out.println("FOUND GETFIELD");
+        StringBuilder code = new StringBuilder();
+        Element classElement = fieldInstruction.getFirstOperand();
+        Element fieldElement = fieldInstruction.getSecondOperand();
+        Element valueElement = fieldInstruction.getThirdOperand();
+        //System.out.println("field name is " + ((Operand)fieldInstruction.getSecondOperand()).getName());
+        System.out.println("Testing here" + ((LiteralElement) fieldInstruction.getThirdOperand()).getLiteral());
+        code.append(getLoad(method.getVarTable(), classElement));
+        code.append(getLoad(method.getVarTable(), valueElement));
+        code.append(putField(classElement, fieldElement));
         return code.toString();
     }
 
