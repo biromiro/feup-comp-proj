@@ -35,4 +35,28 @@ public class OptimizeTest {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void testEdgeCases1() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/EdgeCases1.jmm"));
+        TestUtils.noErrors(result);
+    }
+    @Test
+    public void testEdgeCases2() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/EdgeCases2.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void testIfElseBasic() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/IfElseStatementBasic.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void testWhileBasic() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/WhileBasic.jmm"));
+        TestUtils.noErrors(result);
+    }
+
 }

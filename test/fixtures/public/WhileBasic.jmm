@@ -1,0 +1,37 @@
+import ioPlus;
+class HelloWorld {
+
+    int T;
+
+    public boolean equals(int a, int b) {
+        return !(a < b) && !(b < a);
+    }
+
+    public boolean val(int N, boolean all) {
+
+        int i;
+        int[] A;
+
+        i = 0;
+        A = new int[4];
+        T = 10;
+
+        while (( i < N) && (A[i] < T)) {
+            i = i + 1;
+        }
+
+        if (this.equals(i, N)) {
+            all = true;
+        } else {
+            all = false;
+        }
+
+        return all;
+    }
+
+    public static void main(String[] args) {
+        int a;
+        a = 2;
+        this.val(a, true);
+    }
+}

@@ -16,7 +16,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
     private final StringBuilder ollirCode;
     private final SymbolTable symbolTable;
     private int temporaryVarCounter = 0;
-
+    private int labelCounter = 0;
 
     public OllirGenerator(SymbolTable symbolTable) {
         this.ollirCode = new StringBuilder();
@@ -41,10 +41,36 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         addVisit("NewObject", this::newObjectVisit);
         addVisit("NotExpression", this::notExpressionVisit);
         addVisit("ThisKeyword", this::thisKeywordVisit);
+        addVisit("IfThenElseStatement", this::ifThenElseStatementVisit);
+        addVisit("ScopeStatement", this::scopeStatementVisit);
+        addVisit("WhileStatement", this::whileStatementVisit);
     }
 
     public String getCode() {
         return ollirCode.toString();
+    }
+
+    private String getNextLabel(LabelType label) {
+        int labelVal = labelCounter++;
+        switch (label) {
+            case THEN -> {
+                return "THEN_" + labelVal;
+            }
+            case ENDIF -> {
+                return "ENDIF_" + labelVal;
+            }
+            case LOOP ->  {
+                return "LOOP_" + labelVal;
+            }
+            case BODY -> {
+                return "BODY_" + labelVal;
+            }
+            case ENDLOOP -> {
+                return "ENDLOOP_" + labelVal;
+            }
+        }
+
+        return "NULL_" + labelVal;
     }
 
     private Symbol getNextTempSymbol(Type type) {
@@ -525,6 +551,75 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
 
     private String thisKeywordVisit(JmmNode jmmNode, Action s) {
         return "this";
+    }
+
+    private String ifThenElseStatementVisit(JmmNode jmmNode, Action action) {
+
+        String condition = visit(jmmNode.getJmmChild(0), new Action(ActionType.SAVE_TO_TMP));
+        String thenLabel = getNextLabel(LabelType.THEN);
+        String endifLabel = getNextLabel(LabelType.ENDIF);
+
+        JmmNode thenNode = jmmNode.getJmmChild(1);
+        JmmNode elseNode = jmmNode.getJmmChild(2);
+
+        ollirCode.append("if (")
+                .append(condition)
+                .append(") goto ")
+                .append(thenLabel)
+                .append(";\n");
+
+        visit(elseNode, action);
+
+        ollirCode.append("goto ")
+                .append(endifLabel)
+                .append(";\n")
+                .append(thenLabel)
+                .append(":\n");
+
+        visit(thenNode, action);
+
+        ollirCode.append(endifLabel)
+                .append(":\n");
+
+        return "";
+    }
+
+    private String scopeStatementVisit(JmmNode jmmNode, Action action) {
+        for (JmmNode child : jmmNode.getChildren()) {
+            visit(child, action);
+        }
+        return "";
+    }
+
+    private String whileStatementVisit(JmmNode jmmNode, Action action) {
+        String loopLabel = getNextLabel(LabelType.LOOP);
+        String bodyLabel = getNextLabel(LabelType.BODY);
+        String endLoopLabel = getNextLabel(LabelType.ENDLOOP);
+
+        JmmNode conditionNode = jmmNode.getJmmChild(0);
+        JmmNode bodyNode = jmmNode.getJmmChild(1);
+
+        ollirCode.append(loopLabel)
+                .append(":\n");
+
+        String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+
+        ollirCode.append("if (")
+                .append(condition)
+                .append(") goto ")
+                .append(bodyLabel)
+                .append(";\ngoto ")
+                .append(endLoopLabel)
+                .append(";\n")
+                .append(bodyLabel)
+                .append(":\n");
+
+        visit(bodyNode, action);
+
+        ollirCode.append(endLoopLabel)
+                .append(":\n");
+
+        return "";
     }
 
 }
