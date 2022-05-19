@@ -143,7 +143,7 @@ public class OllirToJasmin {
     private String getField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
         String fieldName = ((Operand)fieldElement).getName();
-        String className = ((Operand)classElement).getName();
+        String className = ((ClassType)classElement.getType()).getName();
         code.append("getfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
@@ -152,7 +152,8 @@ public class OllirToJasmin {
     private String putField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
         String fieldName = ((Operand)fieldElement).getName();
-        String className = ((Operand)classElement).getName();
+        String className = ((ClassType)classElement.getType()).getName();
+        //System.out.println("class name please " + ((ClassType)classElement.getType()).getName());
         code.append("putfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
