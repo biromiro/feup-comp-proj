@@ -26,19 +26,17 @@ public class OllirToJasmin {
         for (String importString : this.classUnit.getImports()) {
             var splittedImports = importString.split("\\.");
             String lastName;
-            System.out.println("IMPORT: " + importString);
             if (splittedImports.length == 0) {
                 lastName = importString;
             } else {
                 lastName = splittedImports[splittedImports.length - 1];
             }
-            System.out.println("lastName: " + lastName);
-            System.out.println("ClassName: " + className);
             if (lastName.equals(className)) {
                 return importString.replace('.', '/');
             }
         }
-        throw new RuntimeException("Could not find import for class " + className);
+        return this.classUnit.getClassName().replace("\\.", "/");
+        //throw new RuntimeException("Could not find import for class " + className);
     }
 
     public String getCode() {
@@ -111,7 +109,7 @@ public class OllirToJasmin {
         //instructionMap.put(CallInstruction.class, this.getCode());
 
         if (instruction instanceof CallInstruction) {
-            return getCode(method, (CallInstruction) instruction);
+            return getCode(method.getVarTable(), (CallInstruction) instruction);
         }
         if (instruction instanceof ReturnInstruction) {
             return getCode(method, (ReturnInstruction) instruction);
@@ -119,17 +117,46 @@ public class OllirToJasmin {
         if (instruction instanceof AssignInstruction) {
             return getCode(method, (AssignInstruction) instruction);
         }
+        if (instruction instanceof GetFieldInstruction) {
+            return getCode(method, (GetFieldInstruction) instruction);
+        }
+        if (instruction instanceof PutFieldInstruction) {
+            return getCode(method, (PutFieldInstruction) instruction);
+        }
 
         throw new NotImplementedException(instruction.getClass());
     }
 
-    public String getCode(Method method, CallInstruction callInstruction) {
-        var table = method.getVarTable();
+    public String getCode(Method method, GetFieldInstruction fieldInstruction) {
+        StringBuilder code = new StringBuilder();
+        Element classElement = fieldInstruction.getFirstOperand();
+        Element fieldElement = fieldInstruction.getSecondOperand();
+        code.append(getLoad(method.getVarTable(), classElement));
+
+        code.append(getField(classElement, fieldElement));
+        return code.toString();
+    }
+
+    private String getField(Element classElement, Element fieldElement) {
+        StringBuilder code = new StringBuilder();
+        String className = ((ClassType) classElement.getType()).getName();
+        System.out.println("field element " + fieldElement);
+        return code.toString();
+    }
+
+    public String getCode(Method method, PutFieldInstruction fieldInstruction) {
+        StringBuilder code = new StringBuilder();
+        return code.toString();
+    }
+
+    public String getCode(HashMap<String, Descriptor> table, CallInstruction callInstruction) {
         switch (callInstruction.getInvocationType()) {
+            case NEW:
+                return getCodeNew(callInstruction, table);
             case invokestatic:
                 return getCodeInvokeStatic(callInstruction);
             case invokespecial:
-                return getCodeInvokeSpecial(callInstruction);
+                return getCodeInvokeSpecial(callInstruction, table);
             case invokevirtual:
                 return getCodeInvokeVirtual(callInstruction, table);
             default: {
@@ -137,6 +164,27 @@ public class OllirToJasmin {
                 //return "";
             }
         }
+    }
+
+    public String getCodeNew(CallInstruction callInstruction, HashMap<String, Descriptor> table) {
+        StringBuilder code = new StringBuilder();
+        String returnType = ((ClassType)callInstruction.getReturnType()).getName();
+        code.append(newCall(returnType)).append("\n");
+        code.append("dup\n");
+        code.append("invokespecial ").append(getFullyQualifiedName(returnType)).append("/<init>()V").append("\n");
+
+//        for (Element e : callInstruction.getListOfOperands()) {
+//            code.append(getLoad(table, e));
+//        }
+
+//        code.append("new ").append(((Operand) callInstruction.getFirstArg()).getName()).append("\n")
+//                .append("dup\n");
+
+        return code.toString();
+    }
+
+    private String newCall(String className) {
+        return "new " + className + '\n';
     }
 
     public String getCode(Method method, AssignInstruction assignInstruction) {
@@ -148,9 +196,11 @@ public class OllirToJasmin {
         System.out.println("Here " + lhs.toString());
         System.out.println("Rhs: " + rhs.toString());
         String rhsString = getOperand(table, rhs);
-
+        System.out.println(rhsString);
         //store to lhs
-        code.append(getStore(lhs, rhsString, method.getVarTable()));
+        String val = getStore(lhs, rhsString, method.getVarTable());
+        System.out.println(val);
+        code.append(val);
 
         return code.toString();
     }
@@ -158,13 +208,30 @@ public class OllirToJasmin {
     private String getStore(Element lhs, String rhs, HashMap<String, Descriptor> table) {
         StringBuilder code = new StringBuilder();
         ElementType type = lhs.getType().getTypeOfElement();
+        int register = table.get(((Operand) lhs).getName()).getVirtualReg();
 
-        if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
-            int register = table.get(((Operand) lhs).getName()).getVirtualReg();
+        if (type == ElementType.INT32 ||
+                type == ElementType.STRING ||
+                type == ElementType.BOOLEAN) {
             return rhs + istore(register);
+        } else if (type == ElementType.OBJECTREF ||
+                type == ElementType.THIS ||
+                type == ElementType.ARRAYREF) {
+            return rhs + astore(register);
         }
 
         return "";
+    }
+
+    private String astore(int register) {
+        String instruction = "astore";
+        if (register >= 0 && register <= 3) {
+            instruction = instruction + "_";
+        }
+        else {
+            instruction = instruction + " ";
+        }
+        return instruction + register + "\n";
     }
 
     private String istore(int register) {
@@ -185,6 +252,9 @@ public class OllirToJasmin {
             }
             case BINARYOPER -> {
                 return getBinaryOper(table, (BinaryOpInstruction) instruction);
+            }
+            case CALL -> {
+                return getCode(table, (CallInstruction) instruction);
             }
             default -> {
                 return "\n";
@@ -311,9 +381,13 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String getCodeInvokeSpecial(CallInstruction instruction) {
+    public String getCodeInvokeSpecial(CallInstruction instruction, HashMap<String, Descriptor> table) {
         StringBuilder code = new StringBuilder();
-        code.append("invokespecial java/lang/Object/<init>()V ; call super\n");
+        String superClass = this.classUnit.getSuperClass();
+        // Super class name
+        String superClassName = superClass != null ? this.getFullyQualifiedName(superClass) : "java/lang/Object";
+        code.append(getLoad(table, instruction.getFirstArg()));
+        code.append("invokespecial ").append(superClassName).append("/<init>()V\n");
         return code.toString();
     }
 
@@ -397,6 +471,4 @@ public class OllirToJasmin {
         }
         //return "";
     }
-
-
 }

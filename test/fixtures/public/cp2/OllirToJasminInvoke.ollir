@@ -7,14 +7,11 @@ Test {
 	}
 
 	.method public static main(args.array.String).V {
-		test.Test :=.Test new(Test).Test;	
-		invokespecial(test.Test,"<init>").V;
-			
-		invokevirtual(test.Test, "foo").V;
+		test.Test :=.Test new(Test).Test;
 		ret.V;
 	}
 
-	
+
 	.method public foo().V {
 
 		invokestatic(io, "println", 10.i32).V;
