@@ -109,7 +109,7 @@ public class OllirToJasmin {
         //instructionMap.put(CallInstruction.class, this.getCode());
 
         if (instruction instanceof CallInstruction) {
-            return getCode(method.getVarTable(), (CallInstruction) instruction);
+            return getCode(method, (CallInstruction) instruction);
         }
         if (instruction instanceof ReturnInstruction) {
             return getCode(method, (ReturnInstruction) instruction);
@@ -149,16 +149,16 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String getCode(HashMap<String, Descriptor> table, CallInstruction callInstruction) {
+    public String getCode(Method method, CallInstruction callInstruction) {
         switch (callInstruction.getInvocationType()) {
             case NEW:
-                return getCodeNew(callInstruction, table);
+                return getCodeNew(callInstruction, method);
             case invokestatic:
-                return getCodeInvokeStatic(callInstruction);
+                return getCodeInvokeStatic(callInstruction, method);
             case invokespecial:
-                return getCodeInvokeSpecial(callInstruction, table);
+                return getCodeInvokeSpecial(callInstruction, method);
             case invokevirtual:
-                return getCodeInvokeVirtual(callInstruction, table);
+                return getCodeInvokeVirtual(callInstruction, method);
             default: {
                 throw new NotImplementedException(callInstruction.getInvocationType());
                 //return "";
@@ -166,12 +166,12 @@ public class OllirToJasmin {
         }
     }
 
-    public String getCodeNew(CallInstruction callInstruction, HashMap<String, Descriptor> table) {
+    public String getCodeNew(CallInstruction callInstruction, Method method) {
         StringBuilder code = new StringBuilder();
         String returnType = ((ClassType)callInstruction.getReturnType()).getName();
         code.append(newCall(returnType)).append("\n");
         code.append("dup\n");
-        code.append("invokespecial ").append(getFullyQualifiedName(returnType)).append("/<init>()V").append("\n");
+        //code.append("invokespecial ").append(getFullyQualifiedName(returnType)).append("/<init>()V").append("\n");
 
 //        for (Element e : callInstruction.getListOfOperands()) {
 //            code.append(getLoad(table, e));
@@ -192,10 +192,9 @@ public class OllirToJasmin {
 
         Element lhs = assignInstruction.getDest();
         Instruction rhs = assignInstruction.getRhs();
-        var table = method.getVarTable();
         System.out.println("Here " + lhs.toString());
         System.out.println("Rhs: " + rhs.toString());
-        String rhsString = getOperand(table, rhs);
+        String rhsString = getOperand(method, rhs);
         System.out.println(rhsString);
         //store to lhs
         String val = getStore(lhs, rhsString, method.getVarTable());
@@ -245,16 +244,16 @@ public class OllirToJasmin {
         return instruction + register + "\n";
     }
 
-    private String getOperand(HashMap<String, Descriptor> table, Instruction instruction) {
+    private String getOperand(Method method, Instruction instruction) {
         switch (instruction.getInstType()) {
             case NOPER -> {
-                return getNoper(table, (SingleOpInstruction) instruction);
+                return getNoper(method.getVarTable(), (SingleOpInstruction) instruction);
             }
             case BINARYOPER -> {
-                return getBinaryOper(table, (BinaryOpInstruction) instruction);
+                return getBinaryOper(method.getVarTable(), (BinaryOpInstruction) instruction);
             }
             case CALL -> {
-                return getCode(table, (CallInstruction) instruction);
+                return getCode(method, (CallInstruction) instruction);
             }
             default -> {
                 return "\n";
@@ -365,8 +364,15 @@ public class OllirToJasmin {
         return instruction + "\n";
     }
 
-    public String getCodeInvokeStatic(CallInstruction instruction) {
+    public String getCodeInvokeStatic(CallInstruction instruction, Method method) {
+        HashMap<String, Descriptor> table = method.getVarTable();
+
         StringBuilder code = new StringBuilder();
+        ArrayList<Element> parameters = instruction.getListOfOperands();
+
+        for (Element parameter : parameters) {
+            code.append(getLoad(table, parameter));
+        }
 
         code.append("invokestatic ");
         System.out.println();
@@ -381,17 +387,27 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String getCodeInvokeSpecial(CallInstruction instruction, HashMap<String, Descriptor> table) {
+    public String getCodeInvokeSpecial(CallInstruction instruction, Method method) {
+
+        HashMap<String, Descriptor> table = method.getVarTable();
         StringBuilder code = new StringBuilder();
         String superClass = this.classUnit.getSuperClass();
-        // Super class name
-        String superClassName = superClass != null ? this.getFullyQualifiedName(superClass) : "java/lang/Object";
+        ElementType classType = instruction.getFirstArg().getType().getTypeOfElement();
         code.append(getLoad(table, instruction.getFirstArg()));
-        code.append("invokespecial ").append(superClassName).append("/<init>()V\n");
+        //System.out.println("type is " + instruction.getFirstArg().getType().getTypeOfElement());
+        // Super class name
+        String className = this.classUnit.getClassName();
+
+        if(method.getMethodName().equals("<init>")) {
+            className = "java/lang/Object";
+        }
+
+        code.append("invokespecial ").append(className).append("/<init>()V\n");
         return code.toString();
     }
 
-    public String getCodeInvokeVirtual(CallInstruction instruction, HashMap<String, Descriptor> table) {
+    public String getCodeInvokeVirtual(CallInstruction instruction, Method method) {
+        HashMap<String, Descriptor> table = method.getVarTable();
         StringBuilder code = new StringBuilder();
         ArrayList<Element> parameters = instruction.getListOfOperands();
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
