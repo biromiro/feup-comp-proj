@@ -36,7 +36,6 @@ public class OllirToJasmin {
             }
         }
         return this.classUnit.getClassName().replace("\\.", "/");
-        //throw new RuntimeException("Could not find import for class " + className);
     }
 
     public String getCode() {
@@ -96,7 +95,6 @@ public class OllirToJasmin {
 
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
-            System.out.println("instruction " + instruction.toString());
             code.append(getCode(method, instruction));
         }
 
@@ -118,11 +116,9 @@ public class OllirToJasmin {
             return getCode(method, (AssignInstruction) instruction);
         }
         if (instruction instanceof GetFieldInstruction) {
-            System.out.println("FOUND GET FIELD");
             return getCode(method, (GetFieldInstruction) instruction);
         }
         if (instruction instanceof PutFieldInstruction) {
-            System.out.println("FOUND PUT FIELD");
             return getCode(method, (PutFieldInstruction) instruction);
         }
 
@@ -130,11 +126,9 @@ public class OllirToJasmin {
     }
 
     public String getCode(Method method, GetFieldInstruction fieldInstruction) {
-        System.out.println("FOUND GETFIELD");
         StringBuilder code = new StringBuilder();
         Element classElement = fieldInstruction.getFirstOperand();
         Element fieldElement = fieldInstruction.getSecondOperand();
-        //System.out.println("field name is " + ((Operand)fieldInstruction.getSecondOperand()).getName());
         code.append(getLoad(method.getVarTable(), classElement));
         code.append(getField(classElement, fieldElement));
         return code.toString();
@@ -153,20 +147,16 @@ public class OllirToJasmin {
         StringBuilder code = new StringBuilder();
         String fieldName = ((Operand)fieldElement).getName();
         String className = ((ClassType)classElement.getType()).getName();
-        //System.out.println("class name please " + ((ClassType)classElement.getType()).getName());
         code.append("putfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
     }
 
     public String getCode(Method method, PutFieldInstruction fieldInstruction) {
-        System.out.println("FOUND GETFIELD");
         StringBuilder code = new StringBuilder();
         Element classElement = fieldInstruction.getFirstOperand();
         Element fieldElement = fieldInstruction.getSecondOperand();
         Element valueElement = fieldInstruction.getThirdOperand();
-        //System.out.println("field name is " + ((Operand)fieldInstruction.getSecondOperand()).getName());
-        System.out.println("Testing here" + ((LiteralElement) fieldInstruction.getThirdOperand()).getLiteral());
         code.append(getLoad(method.getVarTable(), classElement));
         code.append(getLoad(method.getVarTable(), valueElement));
         code.append(putField(classElement, fieldElement));
@@ -185,7 +175,6 @@ public class OllirToJasmin {
                 return getCodeInvokeVirtual(callInstruction, method);
             default: {
                 throw new NotImplementedException(callInstruction.getInvocationType());
-                //return "";
             }
         }
     }
@@ -204,16 +193,12 @@ public class OllirToJasmin {
 
     public String getCode(Method method, AssignInstruction assignInstruction) {
         StringBuilder code = new StringBuilder();
-
         Element lhs = assignInstruction.getDest();
         Instruction rhs = assignInstruction.getRhs();
-        System.out.println("Here " + lhs.toString());
-        System.out.println("Rhs: " + rhs.toString());
         String rhsString = getOperand(method, rhs);
-        System.out.println(rhsString);
+
         //store to lhs
         String val = getStore(lhs, rhsString, method.getVarTable());
-        System.out.println(val);
         code.append(val);
 
         return code.toString();
@@ -288,14 +273,12 @@ public class OllirToJasmin {
         String rightLoad = getLoad(table, rhs);
         OperationType type = instruction.getOperation().getOpType();
 
-        //grammar accepts &&, ! and <
-        boolean isBooleanOp = type == OperationType.ANDB || type == OperationType.NOTB || type == OperationType.LTH;
+        //grammar also accepts && and <
 
-        if (!isBooleanOp) {
-            code.append(leftLoad);
-            code.append(rightLoad);
-            code.append(getArithmetic(type));
-        }
+        code.append(leftLoad);
+        code.append(rightLoad);
+        code.append(getArithmetic(type));
+
         return code.toString();
     }
 
@@ -305,6 +288,8 @@ public class OllirToJasmin {
             case SUB -> "isub\n";
             case MUL -> "imul\n";
             case DIV -> "idiv\n";
+            case AND -> "iand\n";
+            case OR -> "ior\n";
             default -> "";
         };
     }
@@ -319,24 +304,21 @@ public class OllirToJasmin {
 
         // instruction of the iconst family
         if (element.isLiteral()) {
-            System.out.println("hit iconst");
             return iconst(((LiteralElement) element).getLiteral());
         }
 
         // instruction of the iload family
         if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
-            System.out.println("hit iload");
             int register = table.get(((Operand) element).getName()).getVirtualReg();
             return iload(register);
         }
 
         // instruction of the aload family
         if (type == ElementType.OBJECTREF || type == ElementType.ARRAYREF || type == ElementType.THIS) {
-            System.out.println("hit aload");
             int register = table.get(((Operand) element).getName()).getVirtualReg();
             return aload(register);
         }
-        System.out.println("Here, type was " + type.name());
+
         return "";
     }
 
@@ -393,7 +375,7 @@ public class OllirToJasmin {
         }
 
         code.append("invokestatic ");
-        System.out.println();
+
         String methodClass = ((Operand) instruction.getFirstArg()).getName();
         code.append(getFullyQualifiedName(methodClass));
         code.append("/");
@@ -412,7 +394,7 @@ public class OllirToJasmin {
         String superClass = this.classUnit.getSuperClass();
         ElementType classType = instruction.getFirstArg().getType().getTypeOfElement();
         code.append(getLoad(table, instruction.getFirstArg()));
-        //System.out.println("type is " + instruction.getFirstArg().getType().getTypeOfElement());
+        //
         // Super class name
         String className = this.classUnit.getClassName();
 
@@ -442,8 +424,8 @@ public class OllirToJasmin {
         code.append(getArgumentsCode(parameters));
         code.append(getJasminType(returnType));
         code.append("\n");
-        System.out.println("now " + code.toString());
-        System.out.println("parameters: " + parameters);
+
+
 
 
         return code.toString();
