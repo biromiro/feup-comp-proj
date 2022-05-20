@@ -205,6 +205,10 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
             }
         }
 
+        if (method.getKind().equals("MainMethodDef")) {
+            ollirCode.append("ret.V;\n");
+        }
+
         ollirCode.append("}\n\n");
 
         return "";
