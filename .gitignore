@@ -1,9 +1,13 @@
 /bin/
 .gradle/
+.idea/
 /build/
 /.settings/
 /generated/
 /run/
+gradle/wrapper
+gradlew
+gradlew.bat
 
 # Class files
 **/*.class
