@@ -303,9 +303,8 @@ public class OllirToJasmin {
         return switch (type) {
             case ADD -> "iadd\n";
             case SUB -> "isub\n";
-            case MUL -> "imul\n";
+            case MUL, ANDB -> "imul\n";
             case DIV -> "idiv\n";
-            case AND -> "iand\n";
             case OR -> "ior\n";
             default -> "";
         };
