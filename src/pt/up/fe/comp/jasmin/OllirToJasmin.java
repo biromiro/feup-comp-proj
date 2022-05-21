@@ -485,6 +485,9 @@ public class OllirToJasmin {
         if (type instanceof ArrayType) {
             return "[" + getJasminType(((ArrayType)type).getTypeOfElements());
         }
+        if (type instanceof ClassType) {
+            return "L" + getFullyQualifiedName(((ClassType) type).getName()) + ";";
+        }
         return getJasminType(type.getTypeOfElement());
     }
 
