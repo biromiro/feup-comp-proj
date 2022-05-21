@@ -75,17 +75,31 @@ public class OllirToJasmin {
 
         // Modifiers
         AccessModifiers accessModifier = field.getFieldAccessModifier();
-        String accessModifierName = "";
+        StringBuilder accessModifierName = new StringBuilder();
         if (accessModifier != AccessModifiers.DEFAULT) {
-            accessModifierName = accessModifier.name().toLowerCase() + " ";
+            accessModifierName.append(accessModifier.name().toLowerCase()).append(" ");
+        }
+        if (field.isStaticField()) {
+            accessModifierName.append("static ");
+        }
+        if (field.isFinalField()) {
+            accessModifierName.append("final ");
         }
         code.append(".field ").append(accessModifierName);
+
 
         // Field name
         code.append(field.getFieldName()).append(" ");
 
         // Field return type
-        code.append(getJasminType(field.getFieldType())).append("\n");
+        code.append(getJasminType(field.getFieldType()));
+
+        // Initialization
+        if (field.isInitialized()){
+            code.append(" = ").append(field.getInitialValue());
+        }
+
+        code.append("\n");
 
         return code.toString();
     }
