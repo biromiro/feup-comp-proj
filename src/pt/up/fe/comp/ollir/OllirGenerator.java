@@ -305,6 +305,21 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         String id = visit(identifier, new Action(ActionType.SAVE_TO_TMP));
         String args = visit(methodArguments, action);
 
+        if (id.charAt(0) == '$') {
+            Type identifierType = AnalysisUtils.getType(identifier);
+
+            String temp =  getNextTemp(identifierType);
+
+            ollirCode.append(temp)
+                    .append(" :=.")
+                    .append(OllirUtils.getCode(identifierType))
+                    .append(" ")
+                    .append(id)
+                    .append(";\n");
+
+            id = temp;
+        }
+
         if (type.isPresent()) {
             call.append("invokevirtual(");
         } else {
