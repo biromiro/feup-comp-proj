@@ -249,6 +249,9 @@ public class OllirToJasmin {
             case NOPER -> {
                 return getNoper(method.getVarTable(), (SingleOpInstruction) instruction);
             }
+            case UNARYOPER -> {
+                return getUnaryOper(method.getVarTable(), (UnaryOpInstruction) instruction);
+            }
             case BINARYOPER -> {
                 return getBinaryOper(method.getVarTable(), (BinaryOpInstruction) instruction);
             }
@@ -262,6 +265,20 @@ public class OllirToJasmin {
                 return "\n";
             }
         }
+    }
+
+    private String getUnaryOper(HashMap<String, Descriptor> table, UnaryOpInstruction instruction) {
+        StringBuilder code = new StringBuilder();
+        Element element = instruction.getOperand();
+        Operation operation = instruction.getOperation();
+
+        if (operation.getOpType() == OperationType.NOTB) {
+            code.append(iconst("1"));
+            code.append(getLoad(table, element));
+            code.append("isub\n");
+        }
+
+        return code.toString();
     }
 
     private String getBinaryOper(HashMap<String, Descriptor> table, BinaryOpInstruction instruction) {
