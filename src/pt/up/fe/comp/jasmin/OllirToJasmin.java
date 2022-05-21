@@ -345,11 +345,6 @@ public class OllirToJasmin {
 
     private String iconst(String num) {
         int integer = Integer.parseInt(num);
-        if (num.equals("true")) {
-            integer = 1;
-        } else if (num.equals("false")) {
-            integer = 0;
-        }
         String instruction = "";
         if (integer == -1) {
             instruction = "iconst_m1";
