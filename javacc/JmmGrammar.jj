@@ -161,7 +161,7 @@ Operand #void: IntegerLiteral |
         ) #Identifier;
 
 IntegerLiteral: <INTEGER> ({jjtThis.put("val", lastConsumedToken.getImage()); jjtThis.put("type", "int"); jjtThis.put("isArray", "false");});
-BooleanLiteral: (<TRUE> ({jjtThis.put("val", "true"); }) | <FALSE> ({jjtThis.put("val", "false"); })) ({ jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false");});
+BooleanLiteral: (<TRUE> ({jjtThis.put("val", "1"); }) | <FALSE> ({jjtThis.put("val", "0"); })) ({ jjtThis.put("type", "boolean"); jjtThis.put("isArray", "false");});
 
 // Injections for the implementation of JmmNode
 INJECT BaseNode :

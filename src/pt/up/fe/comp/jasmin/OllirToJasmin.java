@@ -345,6 +345,11 @@ public class OllirToJasmin {
 
     private String iconst(String num) {
         int integer = Integer.parseInt(num);
+        if (num.equals("true")) {
+            integer = 1;
+        } else if (num.equals("false")) {
+            integer = 0;
+        }
         String instruction = "";
         if (integer == -1) {
             instruction = "iconst_m1";
@@ -391,18 +396,23 @@ public class OllirToJasmin {
 
         HashMap<String, Descriptor> table = method.getVarTable();
         StringBuilder code = new StringBuilder();
-        String superClass = this.classUnit.getSuperClass();
-        ElementType classType = instruction.getFirstArg().getType().getTypeOfElement();
-        code.append(getLoad(table, instruction.getFirstArg()));
-        //
-        // Super class name
-        String className = this.classUnit.getClassName();
+        ArrayList<Element> parameters = instruction.getListOfOperands();
+        String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
+        String className = ((ClassType) instruction.getFirstArg().getType()).getName();
+        Type returnType = instruction.getReturnType();
 
-        if(method.getMethodName().equals("<init>")) {
-            className = "java/lang/Object";
+        for (Element parameter : parameters) {
+            code.append(getLoad(table, parameter));
         }
 
-        code.append("invokespecial ").append(className).append("/<init>()V\n");
+        code.append(getLoad(table, instruction.getFirstArg()));
+
+        code.append("invokespecial ").append(className).append("/");
+        code.append(methodName.replace("\"", ""));
+        code.append(getArgumentsCode(parameters));
+        code.append(getJasminType(returnType));
+        code.append("\n");
+
         return code.toString();
     }
 
