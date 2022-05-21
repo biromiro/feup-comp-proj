@@ -137,7 +137,7 @@ public class OllirToJasmin {
     private String getField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
         String fieldName = ((Operand)fieldElement).getName();
-        String className = ((ClassType)classElement.getType()).getName();
+        String className = getFullyQualifiedName(((ClassType)classElement.getType()).getName());
         code.append("getfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
@@ -146,7 +146,7 @@ public class OllirToJasmin {
     private String putField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
         String fieldName = ((Operand)fieldElement).getName();
-        String className = ((ClassType)classElement.getType()).getName();
+        String className = getFullyQualifiedName(((ClassType)classElement.getType()).getName());
         code.append("putfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
@@ -188,7 +188,7 @@ public class OllirToJasmin {
     }
 
     private String newCall(String className) {
-        return "new " + className + '\n';
+        return "new " + getFullyQualifiedName(className) + '\n';
     }
 
     public String getCode(Method method, AssignInstruction assignInstruction) {
@@ -409,7 +409,7 @@ public class OllirToJasmin {
         StringBuilder code = new StringBuilder();
         ArrayList<Element> parameters = instruction.getListOfOperands();
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        String className = ((ClassType) instruction.getFirstArg().getType()).getName();
+        String className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
         Type returnType = instruction.getReturnType();
 
         for (Element parameter : parameters) {
@@ -432,7 +432,7 @@ public class OllirToJasmin {
         StringBuilder code = new StringBuilder();
         ArrayList<Element> parameters = instruction.getListOfOperands();
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        String className = ((ClassType) instruction.getFirstArg().getType()).getName();
+        String className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
         Type returnType = instruction.getReturnType();
 
         code.append(getLoad(table, instruction.getFirstArg()));
