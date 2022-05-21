@@ -50,6 +50,10 @@ public class OllirToJasmin {
         String superClassName = superClass != null ? this.getFullyQualifiedName(superClass) : "java/lang/Object";
         code.append(".super ").append(superClassName).append("\n\n");
 
+        for (Field field : this.classUnit.getFields()) {
+            code.append(this.getCode(field));
+        }
+
         // Super constructor
         code.append(SpecsIo.getResource("jasminConstructor.template").replace("${SUPER_NAME}", superClassName));
 
@@ -62,6 +66,26 @@ public class OllirToJasmin {
 
             }
         }
+
+        return code.toString();
+    }
+
+    public String getCode(Field field) {
+        StringBuilder code = new StringBuilder();
+
+        // Modifiers
+        AccessModifiers accessModifier = field.getFieldAccessModifier();
+        String accessModifierName = "";
+        if (accessModifier != AccessModifiers.DEFAULT) {
+            accessModifierName = accessModifier.name().toLowerCase() + " ";
+        }
+        code.append(".field ").append(accessModifierName);
+
+        // Field name
+        code.append(field.getFieldName()).append(" ");
+
+        // Field return type
+        code.append(getJasminType(field.getFieldType())).append("\n");
 
         return code.toString();
     }
@@ -182,7 +206,7 @@ public class OllirToJasmin {
     public String getCodeNew(CallInstruction callInstruction, Method method) {
         StringBuilder code = new StringBuilder();
         String returnType = ((ClassType)callInstruction.getReturnType()).getName();
-        code.append(newCall(returnType)).append("\n");
+        code.append(newCall(returnType));
         code.append("dup\n");
         return code.toString();
     }
