@@ -55,7 +55,11 @@ public class OllirToJasmin {
         }
 
         // Super constructor
-        code.append(SpecsIo.getResource("jasminConstructor.template").replace("${SUPER_NAME}", superClassName));
+        code.append(".method public <init>()V\n")
+                .append("aload_0\n")
+                .append("invokespecial ").append(superClassName).append("/<init>()V\n")
+                .append("return\n")
+                .append(".end method\n\n");
 
         code.append("\n\n\n");
 
