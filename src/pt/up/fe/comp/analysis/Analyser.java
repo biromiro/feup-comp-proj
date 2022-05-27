@@ -20,6 +20,14 @@ public class Analyser implements JmmAnalysis {
         List<Report> analysisReports = new AnalyseVisitor().visit(parserResult.getRootNode(), symbolTable);
         List<Report> reports = SpecsCollections.concat(symbolTableReports, analysisReports);
 
+        if (parserResult.getConfig().get("debug").equals("true")) {
+            System.out.println("AST:\n");
+            System.out.println(parserResult.getRootNode().toString());
+
+            System.out.println("Symbol table:\n");
+            symbolTable.print();
+        }
+
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

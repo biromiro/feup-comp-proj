@@ -14,7 +14,11 @@ public class MyJasminBackend implements JasminBackend {
         ClassUnit ollir = ollirResult.getOllirClass();
         String jasminCode = new OllirToJasmin(ollir).getCode();
 
-        System.out.println("JASMIN CODE:\n" + jasminCode);
+        if (ollirResult.getConfig().get("debug").equals("true")) {
+            System.out.println("JASMIN CODE:");
+            System.out.println(jasminCode);
+        }
+
         return new JasminResult(jasminCode);
     }
 }

@@ -1,5 +1,0 @@
-.method public <init>()V
-    aload_0
-    invokespecial ${SUPER_NAME}/<init>()V
-    return
-.end method

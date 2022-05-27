@@ -52,11 +52,12 @@ public class Parser implements JmmParser {
         } catch (Exception e) {
             var parseException = TestUtils.getException(e, ParseException.class);
             if (parseException == null) {
-                return JmmParserResult.newError(Report.newError(Stage.OTHER, -1, -1, "Exception during parsing", e));
+                return JmmParserResult.newError(Report.newError(Stage.OTHER, -1, -1,
+                        "Exception during parsing", e));
             } else {
                 Token t = parseException.getToken();
-                String message = parseException.getMessage();
-                Report report = Report.newError(Stage.SYNTATIC, t.getBeginLine(), t.getBeginColumn(), message, parseException);
+                Report report = Report.newError(Stage.SYNTATIC, t.getBeginLine(), t.getBeginColumn(),
+                        "Exception during parsing", parseException);
                 return JmmParserResult.newError(report);
             }
         }
