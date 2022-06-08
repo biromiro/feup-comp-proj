@@ -1,16 +1,10 @@
 package pt.up.fe.comp.jasmin;
 
-import com.javacc.parser.tree.ReturnType;
-import com.sun.jdi.IntegerType;
 import org.specs.comp.ollir.*;
-import pt.up.fe.comp.VOID;
-import pt.up.fe.specs.util.SpecsIo;
-import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class OllirToJasmin {
@@ -163,8 +157,24 @@ public class OllirToJasmin {
         if (instruction instanceof PutFieldInstruction) {
             return getCode(method, (PutFieldInstruction) instruction);
         }
+        if (instruction instanceof CondBranchInstruction) {
+            return getCode(method, (CondBranchInstruction) instruction);
+        }
+        if (instruction instanceof GotoInstruction) {
+            return getCode(method, (GotoInstruction) instruction);
+        }
 
         throw new NotImplementedException(instruction.getClass());
+    }
+
+    public String getCode(Method method, GotoInstruction instruction) {
+        return "goto " + instruction.getLabel() + "\n";
+    }
+
+    public String getCode(Method method, CondBranchInstruction instruction) {
+        StringBuilder code = new StringBuilder();
+        code.append("if here\n");
+        return code.toString();
     }
 
     public String getCode(Method method, GetFieldInstruction fieldInstruction) {
