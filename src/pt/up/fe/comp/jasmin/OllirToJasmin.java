@@ -129,8 +129,15 @@ public class OllirToJasmin {
 
         code.append(".limit stack 99\n").append(".limit locals 99\n");
 
+        HashMap<String, Instruction> labels = method.getLabels();
+
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
+            for (String label : labels.keySet()) {
+                if (labels.get(label) == instruction) {
+                    code.append(label + ":\n");
+                }
+            }
             code.append(getCode(method, instruction));
         }
 
@@ -173,7 +180,9 @@ public class OllirToJasmin {
 
     public String getCode(Method method, CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
-        code.append("if here\n");
+        code.append(getNoper(method.getVarTable(), (SingleOpInstruction) instruction.getCondition()));
+        code.append("ifne ").append(instruction.getLabel());
+        code.append("\n");
         return code.toString();
     }
 
