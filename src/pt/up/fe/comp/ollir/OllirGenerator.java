@@ -450,8 +450,12 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                 .append(indexValue)
                 .append(";\n");
 
-        if (identifier.getKind().equals("Identifier"))
-            return visit(identifier, new Action(ActionType.SAVE_FOR_IDX, indexTemp));
+        if (identifier.getKind().equals("Identifier")) {
+            if (action.getAction() == ActionType.SAVE_TO_TMP)
+                return visit(identifier, new Action(ActionType.SAVE_ARR_TMP, indexTemp));
+            else return visit(identifier, new Action(ActionType.SAVE_FOR_IDX, indexTemp));
+        }
+
 
         String identifierVal = visit(identifier, action);
         Type identifierType = AnalysisUtils.getType(identifier);
@@ -535,16 +539,33 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
             return temp;
         }
 
-        if (action.getAction() != ActionType.SAVE_FOR_IDX) {
-            return parameterPrefix.toString() + OllirUtils.getCode(
+        if (action.getAction() != ActionType.SAVE_FOR_IDX
+        && action.getAction() != ActionType.SAVE_ARR_TMP) {
+            return parameterPrefix + OllirUtils.getCode(
                     new Symbol(AnalysisUtils.getType(identifier),
                             identifier.get("name")
                     ));
         }
-        return parameterPrefix + OllirUtils.getCode(
-                new Symbol(AnalysisUtils.getType(identifier),
-                        identifier.get("name")
-                ), action.getContext());
+        Type arrayValType = AnalysisUtils.getType(identifier);
+        String arrayAccess = parameterPrefix + OllirUtils.getCode(
+                new Symbol(arrayValType, identifier.get("name")),
+                action.getContext()
+        );
+
+        if (action.getAction() == ActionType.SAVE_FOR_IDX) {
+            return arrayAccess;
+        }
+
+        String temp =  getNextTemp(arrayValType);
+
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(arrayValType, true))
+                .append(" ")
+                .append(arrayAccess)
+                .append(";\n");
+
+        return temp;
 
     }
 
