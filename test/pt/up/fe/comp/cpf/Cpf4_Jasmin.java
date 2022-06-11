@@ -13,12 +13,6 @@
 
 package pt.up.fe.comp.cpf;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.Collections;
-
 import org.junit.Test;
 import pt.up.fe.comp.CpUtils;
 import pt.up.fe.comp.TestUtils;
@@ -27,6 +21,8 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsStrings;
 import pt.up.fe.specs.util.utilities.LineStream;
+
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 

@@ -180,8 +180,13 @@ public class OllirToJasmin {
 
     public String getCode(Method method, CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
-        code.append(getNoper(method.getVarTable(), (SingleOpInstruction) instruction.getCondition()));
-        code.append("ifne ").append(instruction.getLabel());
+        Element condition = ((SingleOpCondInstruction) instruction).getCondition().getSingleOperand();
+        code.append(getNoper(method.getVarTable(), ((SingleOpCondInstruction) instruction).getCondition()));
+        if (condition.isLiteral()) {
+            code.append("ifne ").append(instruction.getLabel());
+        } else {
+            code.append("if_icmplt ").append(instruction.getLabel());
+        }
         code.append("\n");
         return code.toString();
     }
