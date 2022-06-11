@@ -2,12 +2,16 @@ import ioPlus;
 class HelloWorld {
     int a;
 
-    public int calc(int[] abc, boolean calc) {
+    public int calcaux(int x) { return x+1; }
+        public int calc(int[] abc, boolean calc) {
         int[] d;
+        HelloWorld hw;
         int a;
         boolean what;
         d = new int[abc.length + 2];
         abc = new int[3];
+        hw = new HelloWorld();
+        abc = hw.calcaux(abc[5 + 3]);
         abc[0] = 2;
         a = abc[1];
         what = !calc && false;
