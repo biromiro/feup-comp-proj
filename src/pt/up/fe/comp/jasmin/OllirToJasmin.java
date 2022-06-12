@@ -360,11 +360,8 @@ public class OllirToJasmin {
         String rightLoad = getLoad(table, rhs);
         OperationType type = instruction.getOperation().getOpType();
 
-        //grammar also accepts && and <
-        if (type == OperationType.LTH || type == OperationType.ANDB || type == OperationType.NOTB) {
-            code.append(leftLoad);
-            code.append(rightLoad);
-            code.append(getBoolean(type, lhs, rhs));
+        if (type == OperationType.LTH || type == OperationType.ANDB) {
+            code.append(getBoolean(type, leftLoad, rightLoad));
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
@@ -373,11 +370,10 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    private String getBoolean(OperationType type, Element lhs, Element rhs) {
+    private String getBoolean(OperationType type, String leftLoad, String rightLoad) {
         return switch (type) {
-            case LTH -> getLth(lhs, rhs);
-            case ANDB -> getAndB(lhs, rhs);
-            case NOTB -> getNotB(lhs, rhs);
+            case LTH -> getLth(leftLoad, rightLoad);
+            case ANDB -> getAndB(leftLoad, rightLoad);
             default -> "";
         };
     }
@@ -386,26 +382,44 @@ public class OllirToJasmin {
         return this.comparisons++;
     }
 
-    private String getLth(Element lhs, Element rhs) {
+    private String getLth(String leftLoad, String rightLoad) {
         StringBuilder code = new StringBuilder();
+        code.append(leftLoad);
+        code.append(rightLoad);
         String label1 = "LTH_" + nextLabelNumber();
         String label2 = "LTH_" + nextLabelNumber();
         code.append("if_icmplt ").append(label1).append("\n")
                 .append(iconst("0")).append("goto ")
-                .append(label2).append("\n").append(label1 + ":\n")
-                .append(iconst("1")).append(label2 + ":\n");
+                .append(label2).append("\n").append(label1).append(":\n")
+                .append(iconst("1")).append(label2).append(":\n");
         return code.toString();
     }
 
-    private String getAndB(Element lhs, Element rhs) {
+    private String getAndB(String leftLoad, String rightLoad) {
         StringBuilder code = new StringBuilder();
-        throw new NotImplementedException("boolean and");
+        String label1 = "ANDB_" + nextLabelNumber();
+        String label2 = "ANDB_" + nextLabelNumber();
+
+        // if any side is 0, then result is false
+        code.append(leftLoad);
+        code.append("ifeq ").append(label1).append("\n");
+
+        code.append(rightLoad);
+        code.append("ifeq ").append(label1).append("\n");
+
+        // result is 1
+        code.append(iconst("1"));
+        code.append("goto ").append(label2).append("\n");
+
+        // result is 0
+        code.append(label1).append(":\n");
+        code.append(iconst("0"));
+
+        code.append(label2).append(":\n");
+
+        return code.toString();
     }
 
-    private String getNotB(Element lhs, Element rhs) {
-        StringBuilder code = new StringBuilder();
-        throw new NotImplementedException("boolean not");
-    }
 
     private String getArithmetic(OperationType type) {
         return switch (type) {
