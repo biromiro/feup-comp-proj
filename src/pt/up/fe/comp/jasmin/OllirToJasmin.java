@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public class OllirToJasmin {
 
     private final ClassUnit classUnit;
+    private int comparisons = 0;
 
     public OllirToJasmin(ClassUnit classUnit) {
         this.classUnit = classUnit;
@@ -181,12 +182,15 @@ public class OllirToJasmin {
     public String getCode(Method method, CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
         Element condition = ((SingleOpCondInstruction) instruction).getCondition().getSingleOperand();
-        code.append(getNoper(method.getVarTable(), ((SingleOpCondInstruction) instruction).getCondition()));
+        /*code.append(getNoper(method.getVarTable(), ((SingleOpCondInstruction) instruction).getCondition()));
         if (condition.isLiteral()) {
             code.append("ifne ").append(instruction.getLabel());
         } else {
             code.append("if_icmplt ").append(instruction.getLabel());
-        }
+        }*/
+        //code.append(getNoper(method.getVarTable(), ((SingleOpCondInstruction) instruction).getCondition()));
+        code.append(getLoad(method.getVarTable(), condition));
+        code.append("ifne ").append(instruction.getLabel());
         code.append("\n");
         return code.toString();
     }
@@ -357,12 +361,50 @@ public class OllirToJasmin {
         OperationType type = instruction.getOperation().getOpType();
 
         //grammar also accepts && and <
-
-        code.append(leftLoad);
-        code.append(rightLoad);
-        code.append(getArithmetic(type));
-
+        if (type == OperationType.LTH || type == OperationType.ANDB || type == OperationType.NOTB) {
+            code.append(leftLoad);
+            code.append(rightLoad);
+            code.append(getBoolean(type, lhs, rhs));
+        } else {
+            code.append(leftLoad);
+            code.append(rightLoad);
+            code.append(getArithmetic(type));
+        }
         return code.toString();
+    }
+
+    private String getBoolean(OperationType type, Element lhs, Element rhs) {
+        return switch (type) {
+            case LTH -> getLth(lhs, rhs);
+            case ANDB -> getAndB(lhs, rhs);
+            case NOTB -> getNotB(lhs, rhs);
+            default -> "";
+        };
+    }
+
+    private int nextLabelNumber() {
+        return this.comparisons++;
+    }
+
+    private String getLth(Element lhs, Element rhs) {
+        StringBuilder code = new StringBuilder();
+        String label1 = "LTH_" + nextLabelNumber();
+        String label2 = "LTH_" + nextLabelNumber();
+        code.append("if_icmplt ").append(label1).append("\n")
+                .append(iconst("0")).append("goto ")
+                .append(label2).append("\n").append(label1 + ":\n")
+                .append(iconst("1")).append(label2 + ":\n");
+        return code.toString();
+    }
+
+    private String getAndB(Element lhs, Element rhs) {
+        StringBuilder code = new StringBuilder();
+        throw new NotImplementedException("boolean and");
+    }
+
+    private String getNotB(Element lhs, Element rhs) {
+        StringBuilder code = new StringBuilder();
+        throw new NotImplementedException("boolean not");
     }
 
     private String getArithmetic(OperationType type) {

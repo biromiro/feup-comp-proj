@@ -1,17 +1,13 @@
 package pt.up.fe.comp.ollir;
 
-import com.javacc.parser.tree.Literal;
-import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.ollir.optimize.ConstantPropagationVisitor;
 import pt.up.fe.comp.ollir.optimize.DataFlowAnalysis;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Set;
 
 public class Optimizer implements JmmOptimization {
     @Override
@@ -46,7 +42,7 @@ public class Optimizer implements JmmOptimization {
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
-        if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
+        if (ollirResult.getConfig().getOrDefault("debug", "true").equals("true")) {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
