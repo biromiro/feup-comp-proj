@@ -1,27 +1,38 @@
-import ioPlus;
-class ComplexArrayAccess {
+import io;
+class HelloWorld {
 
-    public int func(int a) {
-        return a;
+    public int func() {
+        int a;
+        int b;
+        int c;
+        a = 30;
+        b = 9 - a / 5;
+        c = b * 4;
+        return c;
     }
 
-	public static void main(String[] args) {
-	    int[] a;
-        int i;
-        ComplexArrayAccess d;
-        d = new ComplexArrayAccess();
-        a = new int[5];
-        a[0] = 1;
-		a[1] = 2;
-		a[2] = 3;
-		a[3] = 4;
-		a[4] = 5;
-        i = 1;
-        ioPlus.printResult(a[d.func(0)]);
-        ioPlus.printResult(a[i]);
-        ioPlus.printResult(a[4/2]);
-        ioPlus.printResult(a[a[2]]);
-        ioPlus.printResult(a[a.length -1 ]);
+    /* eliminates only a few lines of code */
+    public int func(int d) {
+        int a;
+        int b;
+        int c;
+        a = 30;
+        b = 9 - a / 5;
+        c = b * 4;
+        if (10 < d) {
+            c = c - 10;
+        } else {
+            c = 15;
+        }
+        while (10 < c) {
+            c = c + 1;
+        }
+        return c * (60 / a);
+    }
 
-	}
+    public static void main(String[] args) {
+        HelloWorld hw;
+        hw = new HelloWorld();
+        hw.func();
+      }
 }
