@@ -58,15 +58,15 @@ public class Optimizer implements JmmOptimization {
 
         DataFlowAnalysis dataFlowAnalysis = new DataFlowAnalysis(ollirResult);
 
-        if (optimizeFlag || registerAllocationFlag) {
-            dataFlowAnalysis.calcInOut();
-        }
-
         if (optimizeFlag) {
-            dataFlowAnalysis.eliminateDeadVars();
+            do {
+                dataFlowAnalysis.calcInOut();
+            } while (dataFlowAnalysis.eliminateDeadVars());
+
         }
 
         if (registerAllocationFlag) {
+            dataFlowAnalysis.calcInOut();
             dataFlowAnalysis.colorGraph();
             dataFlowAnalysis.allocateRegisters();
         }

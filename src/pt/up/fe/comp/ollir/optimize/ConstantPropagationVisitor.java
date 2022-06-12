@@ -7,7 +7,9 @@ import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
 import pt.up.fe.comp.ollir.Action;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmNode>, String> {
     private boolean hasChanged = false;
@@ -33,7 +35,9 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
                 constantsMap.remove(entry.getKey());
         }
 
-        for (String key: constantsMap.keySet()) {
+        Set<String> keySet = new HashSet<String>(constantsMap.keySet());
+
+        for (String key: keySet) {
             if (newConstantsMap.get(key) == null)
                 constantsMap.remove(key);
         }
@@ -163,7 +167,12 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
             }
             return "";
         }
-        visit(body, new HashMap<>());
+
+        HashMap<String, JmmNode> newConstantsMap = new HashMap<>();
+
+        visit(body, newConstantsMap);
+        fixScopedConstantsMap(constantsMap, newConstantsMap);
+
         return "";
     }
 

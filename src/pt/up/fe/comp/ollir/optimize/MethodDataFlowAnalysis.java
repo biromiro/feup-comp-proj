@@ -5,10 +5,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 import static pt.up.fe.comp.jmm.report.Stage.OPTIMIZATION;
 
@@ -27,7 +24,6 @@ public class MethodDataFlowAnalysis {
     public MethodDataFlowAnalysis(Method method, OllirResult ollirResult) {
         this.method = method;
         this.ollirResult = ollirResult;
-        orderNodes();
     }
 
     private void orderNodes() {
@@ -38,19 +34,26 @@ public class MethodDataFlowAnalysis {
 
     private void dfsOrderNodes(Node node, ArrayList<Node> visited) {
 
-        if (node == null || nodeOrder.contains(node) || visited.contains(node)) {
+        if (node == null
+                || nodeOrder.contains(node)
+                || visited.contains(node)) {
             return;
         }
 
+        if (node instanceof Instruction instruction && !method.getInstructions().contains(instruction))
+            return;
+
         visited.add(node);
 
-        dfsOrderNodes(node.getSucc1(), visited);
-        dfsOrderNodes(node.getSucc2(), visited);
+        for (Node succ: node.getSuccessors()) {
+            dfsOrderNodes(succ, visited);
+        }
 
         nodeOrder.add(node);
     }
 
     public void calcInOut() {
+        orderNodes();
         in = new ArrayList<>();
         out = new ArrayList<>();
         def = new ArrayList<>();
@@ -81,6 +84,7 @@ public class MethodDataFlowAnalysis {
 
                 for (Node succ : node.getSuccessors()) {
                     int succIndex = nodeOrder.indexOf(succ);
+                    if (succIndex == -1) continue;
                     Set<String> in_succIndex = in.get(succIndex);
 
                     out.get(index).addAll(in_succIndex);
@@ -257,7 +261,45 @@ public class MethodDataFlowAnalysis {
         return method;
     }
 
-    public void eliminateDeadVars() {
+    public boolean eliminateDeadVars() {
+        boolean hasDeadVars = false;
+        ArrayList<Instruction> instructions = method.getInstructions();
+        ArrayList<Instruction> copyInstructions = new ArrayList<>(instructions);
+        System.out.println("ENTERED " + copyInstructions.size() + " instructions\n");
+        System.out.println("Node Order " + nodeOrder.size() + "\n");
+        for (Instruction instruction: copyInstructions) {
+            int index = nodeOrder.indexOf(instruction);
+            instruction.show();
+            System.out.println("def: " + def.get(index));
+            System.out.println("out: " + out.get(index));
+            if (instruction instanceof AssignInstruction assignInstruction) {
+                String name = null;
+                if (assignInstruction.getDest() instanceof Operand operand) {
+                    name = operand.getName();
+                }
+                else if (assignInstruction.getDest() instanceof ArrayOperand operand) {
+                    name = operand.getName();
+
+                }
+                if (name != null && def.get(index).contains(name) && !out.get(index).contains(name)) {
+                    List<Node> predecessors = instruction.getPredecessors();
+                    List<Node> successors = instruction.getSuccessors();
+
+                    for (Node predecessor: predecessors) {
+                        for (Node successor: successors) {
+                            predecessor.addSucc(successor);
+                            successor.addPred(predecessor);
+                        }
+                    }
+
+                    instructions.remove(instruction);
+                    hasDeadVars = true;
+                }
+            }
+        }
+        if (hasDeadVars) method.buildVarTable();
+
+        return hasDeadVars;
     }
 
 }
