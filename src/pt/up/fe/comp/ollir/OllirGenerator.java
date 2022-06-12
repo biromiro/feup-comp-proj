@@ -639,9 +639,6 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         JmmNode conditionNode = jmmNode.getJmmChild(0);
         JmmNode bodyNode = jmmNode.getJmmChild(1);
 
-        ollirCode.append(loopLabel)
-                .append(":\n");
-
         String conditionToNegate = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
         Type callType = AnalysisUtils.getType(conditionNode);
         String temp =  getNextTemp(callType);
