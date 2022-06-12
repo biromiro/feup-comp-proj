@@ -642,21 +642,37 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         ollirCode.append(loopLabel)
                 .append(":\n");
 
-        String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+        String conditionToNegate = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+        Type callType = AnalysisUtils.getType(conditionNode);
+        String temp =  getNextTemp(callType);
+
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(callType))
+                .append(" ")
+                .append("!.")
+                .append(OllirUtils.getCode(callType))
+                .append(" ")
+                .append(conditionToNegate)
+                .append(";\n");
 
         ollirCode.append("if (")
-                .append(condition)
+                .append(temp)
                 .append(") goto ")
-                .append(bodyLabel)
-                .append(";\ngoto ")
                 .append(endLoopLabel)
                 .append(";\n")
                 .append(bodyLabel)
                 .append(":\n");
 
         visit(bodyNode, action);
+        String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
 
-        ollirCode.append(endLoopLabel)
+        ollirCode.append("if (")
+                .append(condition)
+                .append(") goto ")
+                .append(bodyLabel)
+                .append(";\n")
+                .append(endLoopLabel)
                 .append(":\n");
 
         return "";

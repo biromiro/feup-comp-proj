@@ -33,17 +33,19 @@ public class MethodDataFlowAnalysis {
     private void orderNodes() {
         Node beginNode = method.getBeginNode();
         this.nodeOrder = new ArrayList<>();
-        dfsOrderNodes(beginNode);
+        dfsOrderNodes(beginNode, new ArrayList<>());
     }
 
-    private void dfsOrderNodes(Node node) {
+    private void dfsOrderNodes(Node node, ArrayList<Node> visited) {
 
-        if (node == null || nodeOrder.contains(node)) {
+        if (node == null || nodeOrder.contains(node) || visited.contains(node)) {
             return;
         }
 
-        dfsOrderNodes(node.getSucc1());
-        dfsOrderNodes(node.getSucc2());
+        visited.add(node);
+
+        dfsOrderNodes(node.getSucc1(), visited);
+        dfsOrderNodes(node.getSucc2(), visited);
 
         nodeOrder.add(node);
     }

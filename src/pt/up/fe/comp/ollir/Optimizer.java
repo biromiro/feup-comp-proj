@@ -50,25 +50,26 @@ public class Optimizer implements JmmOptimization {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
+        String optimize = ollirResult.getConfig().get("optimize");
+        String registerAllocation = ollirResult.getConfig().get("registerAllocation");
+
+        boolean optimizeFlag = optimize != null && optimize.equals("true");
+        boolean registerAllocationFlag = registerAllocation != null && registerAllocation.equals("true");
 
         DataFlowAnalysis dataFlowAnalysis = new DataFlowAnalysis(ollirResult);
 
-        String optimize = ollirResult.getConfig().get("optimize");
-        if (optimize == null || optimize.equals("false")) {
-            return ollirResult;
+        if (optimizeFlag || registerAllocationFlag) {
+            dataFlowAnalysis.calcInOut();
         }
 
-        dataFlowAnalysis.eliminateDeadVars();
-
-        String registerAllocation = ollirResult.getConfig().get("registerAllocation");
-        if (registerAllocation == null || registerAllocation.equals("-1")) {
-            return ollirResult;
+        if (optimizeFlag) {
+            dataFlowAnalysis.eliminateDeadVars();
         }
 
-        dataFlowAnalysis.calcInOut();
-        dataFlowAnalysis.colorGraph();
-        dataFlowAnalysis.allocateRegisters();
-
+        if (registerAllocationFlag) {
+            dataFlowAnalysis.colorGraph();
+            dataFlowAnalysis.allocateRegisters();
+        }
 
         return ollirResult;
     }
