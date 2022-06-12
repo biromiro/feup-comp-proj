@@ -49,4 +49,10 @@ public class DataFlowAnalysis {
         }
 
     }
+
+    public void eliminateDeadVars() {
+        for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
+            methodFlow.eliminateDeadVars();
+        }
+    }
 }

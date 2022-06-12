@@ -28,10 +28,9 @@ public class Optimizer implements JmmOptimization {
                 constantPropagationVisitor.hasChanged()) {
             constantPropagationVisitor = new ConstantPropagationVisitor();
             constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
-            System.out.println("After constant propagation:\n" +semanticsResult.getRootNode().toTree() + "\n\n");
-
         }
 
+        System.out.println("After constant propagation:\n" +semanticsResult.getRootNode().toTree() + "\n\n");
 
         return semanticsResult;
     }
@@ -51,15 +50,26 @@ public class Optimizer implements JmmOptimization {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
+
+        DataFlowAnalysis dataFlowAnalysis = new DataFlowAnalysis(ollirResult);
+
+        String optimize = ollirResult.getConfig().get("optimize");
+        if (optimize == null || optimize.equals("false")) {
+            return ollirResult;
+        }
+
+        dataFlowAnalysis.eliminateDeadVars();
+
         String registerAllocation = ollirResult.getConfig().get("registerAllocation");
         if (registerAllocation == null || registerAllocation.equals("-1")) {
             return ollirResult;
         }
 
-        DataFlowAnalysis dataFlowAnalysis = new DataFlowAnalysis(ollirResult);
         dataFlowAnalysis.calcInOut();
         dataFlowAnalysis.colorGraph();
         dataFlowAnalysis.allocateRegisters();
+
+
         return ollirResult;
     }
 

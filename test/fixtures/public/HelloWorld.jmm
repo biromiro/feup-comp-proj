@@ -8,14 +8,7 @@ class HelloWorld {
         a = 30;
         b = 9 - a / 5;
         c = b * 4;
-        if (!(10 < c)) {
-            c = c - 10;
-        } else {
-        }
-        while (10 < c) {
-            c = c + 1;
-        }
-        return c * (60 / a);
+        return c;
     }
 
     /* eliminates only a few lines of code */

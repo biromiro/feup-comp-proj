@@ -16,8 +16,6 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         addVisit("MethodBody", this::methodBodyVisit);
         addVisit("Identifier", this::identifierVisit);
         addVisit("Assignment", this::assignmentVisit);
-        addVisit("IntegerLiteral", this::terminalVisit);
-        addVisit("BooleanLiteral", this::terminalVisit);
         addVisit("BinaryOp", this::binaryOpVisit);
         addVisit("NotExpression", this::notExpressionVisit);
         addVisit("IfThenElseStatement", this::ifThenElseStatementVisit);
@@ -73,63 +71,21 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         return "";
     }
 
-    private String terminalVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
-        return "";
-    }
-
     private String binaryOpVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         JmmNode left = jmmNode.getJmmChild(0);
         JmmNode right = jmmNode.getJmmChild(1);
         visit(left, constantsMap);
         visit(right, constantsMap);
-        System.out.println("IM HERE");
+
+        ConstantFolder folder = new ConstantFolder();
+
         if (left.getKind().equals("IntegerLiteral") && right.getKind().equals("IntegerLiteral")) {
-            int leftValue = Integer.parseInt(left.get("val"));
-            int rightValue = Integer.parseInt(right.get("val"));
-            int result = 0;
-            switch (jmmNode.get("op")) {
-                case "+":
-                    result = leftValue + rightValue;
-                    break;
-                case "-":
-                    result = leftValue - rightValue;
-                    break;
-                case "*":
-                    result = leftValue * rightValue;
-                    break;
-                case "/":
-                    result = leftValue / rightValue;
-                    break;
-                case "<":
-                    result = leftValue < rightValue ? 1 : 0;
-                    break;
-            }
-            String kind = jmmNode.get("op").equals("<") ? "BooleanLiteral" : "IntegerLiteral";
-            String type = kind.equals("IntegerLiteral") ? "int" : "boolean";
-            JmmNode newLiteral = new JmmNodeImpl(kind);
-            newLiteral.put("val", Integer.toString(result));
-            newLiteral.put("type", type);
-            newLiteral.put("isArray", "false");
-            jmmNode.replace(newLiteral);
+            folder.foldBinOpInt(left, right, jmmNode);
             hasChanged = true;
-            return "";
         }
-
         else if (left.getKind().equals("BooleanLiteral") && right.getKind().equals("BooleanLiteral")) {
-            boolean leftValue = Boolean.parseBoolean(left.get("val"));
-            boolean rightValue = Boolean.parseBoolean(right.get("val"));
-            boolean result = false;
-            if ("&&".equals(jmmNode.get("op"))) {
-                result = leftValue && rightValue;
-            } else return "";
-
-            JmmNode newLiteral = new JmmNodeImpl(left.getKind());
-            newLiteral.put("val", String.valueOf(result));
-            newLiteral.put("type", left.get("type"));
-            newLiteral.put("isArray", "false");
-            jmmNode.replace(newLiteral);
+            folder.foldBinOpBool(left, right, jmmNode);
             hasChanged = true;
-            return "";
         } else {
             visit(left, constantsMap);
             visit(right, constantsMap);
@@ -145,7 +101,7 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
             newLiteral.put("val", constant.get("val"));
             newLiteral.put("type", constant.get("type"));
             newLiteral.put("isArray", constant.get("isArray"));
-            jmmNode.replace(newLiteral);
+            ConstantFolder.replaceNode(jmmNode, newLiteral);
             hasChanged = true;
         }
         return "";
@@ -154,12 +110,9 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     private String notExpressionVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         JmmNode expression = jmmNode.getJmmChild(0);
         visit(expression, constantsMap);
+        ConstantFolder folder = new ConstantFolder();
         if (expression.getKind().equals("BooleanLiteral")) {
-            JmmNode newLiteral = new JmmNodeImpl(expression.getKind());
-            newLiteral.put("val", expression.get("val").equals("1") ? "0" : "1");
-            newLiteral.put("type", expression.get("type"));
-            newLiteral.put("isArray", "false");
-            jmmNode.replace(newLiteral);
+            folder.foldNotExpr(expression, jmmNode);
             hasChanged = true;
         }
         return "";
@@ -173,14 +126,12 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
 
         visit(condition, constantsMap);
 
+        ConstantFolder folder = new ConstantFolder();
+
         if (condition.getKind().equals("BooleanLiteral")) {
-            if (condition.get("val").equals("1")) {
-                visit(thenStatement, constantsMap);
-                jmmNode.replace(thenStatement);
-            } else {
-                visit(elseStatement, constantsMap);
-                jmmNode.replace(elseStatement);
-            }
+            JmmNode nextExpr = condition.get("val").equals("1") ? thenStatement : elseStatement;
+            visit(nextExpr, constantsMap);
+            folder.foldConstantIf(nextExpr, jmmNode);
             hasChanged = true;
             return "";
         }
@@ -204,10 +155,11 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
 
         visit(condition, constantsMap);
 
+        ConstantFolder folder = new ConstantFolder();
+
         if (condition.getKind().equals("BooleanLiteral")) {
             if (condition.get("val").equals("0")) {
-                JmmNode whileParent = jmmNode.getJmmParent();
-                whileParent.removeJmmChild(jmmNode);
+                folder.foldConstantWhile(jmmNode);
             }
             return "";
         }

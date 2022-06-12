@@ -254,4 +254,8 @@ public class MethodDataFlowAnalysis {
     public Method getMethod() {
         return method;
     }
+
+    public void eliminateDeadVars() {
+    }
+
 }
