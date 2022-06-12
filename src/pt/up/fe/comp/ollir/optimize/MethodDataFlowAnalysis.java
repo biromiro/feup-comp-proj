@@ -2,22 +2,31 @@ package pt.up.fe.comp.ollir.optimize;
 
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
+
+import static pt.up.fe.comp.jmm.report.Stage.OPTIMIZATION;
 
 public class MethodDataFlowAnalysis {
 
     private final Method method;
+    private final OllirResult ollirResult;
     private ArrayList<Set<String>> def;
     private ArrayList<Set<String>> use;
     private ArrayList<Set<String>> in;
     private ArrayList<Set<String>> out;
     private ArrayList<Node> nodeOrder;
 
-    public MethodDataFlowAnalysis(Method method) {
+    private InterferenceGraph interferenceGraph;
+
+    public MethodDataFlowAnalysis(Method method, OllirResult ollirResult) {
         this.method = method;
+        this.ollirResult = ollirResult;
         orderNodes();
     }
 
@@ -40,20 +49,16 @@ public class MethodDataFlowAnalysis {
     }
 
     public void calcInOut() {
-        System.out.println("-------------------------");
         in = new ArrayList<>();
         out = new ArrayList<>();
         def = new ArrayList<>();
         use = new ArrayList<>();
-
         for (Node node: nodeOrder) {
             in.add(new HashSet<>());
             out.add(new HashSet<>());
             def.add(new HashSet<>());
             use.add(new HashSet<>());
             calcUseDef(node);
-            System.out.println("nodeuse" + use.get(nodeOrder.indexOf(node)));
-            System.out.println("nodedef" + def.get(nodeOrder.indexOf(node)));
         }
 
         boolean livenessHasChanged;
@@ -89,8 +94,6 @@ public class MethodDataFlowAnalysis {
 
                 livenessHasChanged = livenessHasChanged ||
                         !origIn.equals(in.get(index)) || !origOut.equals(out.get(index));
-                System.out.println(livenessHasChanged);
-                System.out.println("node " + node + " in: " + in.get(index) + " out: " + out.get(index));
             }
 
         } while (livenessHasChanged);
@@ -103,17 +106,17 @@ public class MethodDataFlowAnalysis {
             for (Element element: arrop.getIndexOperands()) {
                 setUse(node, element);
             }
+            arr.get(index).add(arrop.getName());
         }
-        if (val instanceof Operand op) {
+
+        if (val instanceof Operand op && !op.getType().getTypeOfElement().equals(ElementType.THIS)) {
             arr.get(index).add(op.getName());
         }
     }
 
-
     private void setDef(Node node, Element dest) {
         addToUseDefSet(node, dest, def);
     }
-
 
     private void setUse(Node node, Element val) {
         addToUseDefSet(node, val, use);
@@ -149,8 +152,10 @@ public class MethodDataFlowAnalysis {
             setUse(useDefNode, instruction.getOperand());
         } else if (node instanceof CallInstruction instruction) {
             setUse(useDefNode, instruction.getFirstArg());
-            for (Element arg: instruction.getListOfOperands()) {
-                setUse(useDefNode, arg);
+            if (instruction.getListOfOperands() != null) {
+                for (Element arg: instruction.getListOfOperands()) {
+                    setUse(useDefNode, arg);
+                }
             }
         } else if (node instanceof GetFieldInstruction instruction) {
             setUse(useDefNode, instruction.getFirstOperand());
@@ -168,5 +173,85 @@ public class MethodDataFlowAnalysis {
                 setUse(useDefNode, operand);
             }
         }
+    }
+
+    public void buildInterferenceGraph() {
+        interferenceGraph = new InterferenceGraph(method.getVarTable().keySet());
+
+        for (RegisterNode varX: interferenceGraph.getNodes()) {
+            for (RegisterNode varY: interferenceGraph.getNodes()) {
+                if (varX.equals(varY)) {
+                    continue;
+                }
+                for (int index = 0; index < nodeOrder.size(); index++) {
+                    Node node = nodeOrder.get(index);
+                    if (def.get(index).contains(varX.getName())
+                            && out.get(index).contains(varY.getName())) {
+                        // TODO point 4 in https://cse.sc.edu/~mgv/csce531sp20/notes/mogensen_Ch8_Slides_register-allocation.pdf
+                        interferenceGraph.addEdge(varX, varY);
+                    }
+                }
+            }
+        }
+    }
+
+    public void colorInterferenceGraph(int MAX_K) {
+        Stack<RegisterNode> stack = new Stack<>();
+        int k = 0;
+        while (interferenceGraph.getVisibleNodesCount() > 0) {
+            for (RegisterNode node: interferenceGraph.getNodes()) {
+                if (!node.isVisible()) continue;
+                int degree = node.countVisibleNeighbors();
+                if (degree < k) {
+                    node.setInvisible();
+                    stack.push(node);
+                } else {
+                    k += 1;
+                }
+            }
+        }
+
+        if (MAX_K > 0 && k > MAX_K) {
+            ollirResult.getReports().add(
+                    new Report(
+                            ReportType.ERROR,
+                            OPTIMIZATION,
+                            -1,
+                            "Not enough registers. At least " + k + " registers are needed.")
+            );
+            throw new RuntimeException("Not enough registers." +
+                    " At least " + k + " registers are needed but " + MAX_K + " were requested.");
+
+        }
+
+        while (!stack.empty()) {
+            RegisterNode node = stack.pop();
+            for (int reg = 1; reg <= k; reg++) {
+                if (node.edgeFreeRegister(reg)) {
+                    node.setRegister(reg);
+                    node.setVisible();
+                    break;
+                }
+            }
+            if (!node.isVisible()) {
+                ollirResult.getReports().add(
+                        new Report(
+                                ReportType.ERROR,
+                                OPTIMIZATION,
+                                -1,
+                                "Unexpected error. Register allocation failed.")
+                );
+
+                throw new RuntimeException("Unexpected error. Register allocation failed.");
+            }
+        }
+    }
+
+    public InterferenceGraph getInterferenceGraph() {
+        return interferenceGraph;
+    }
+
+    public Method getMethod() {
+        return method;
     }
 }

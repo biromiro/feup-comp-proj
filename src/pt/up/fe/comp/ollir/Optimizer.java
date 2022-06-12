@@ -5,15 +5,34 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp.ollir.optimize.ConstantPropagationVisitor;
 import pt.up.fe.comp.ollir.optimize.DataFlowAnalysis;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
 
 public class Optimizer implements JmmOptimization {
     @Override
     public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
+
+        String optimize = semanticsResult.getConfig().get("optimize");
+        if (optimize == null || optimize.equals("false")) {
+            return semanticsResult;
+        }
+
+        ConstantPropagationVisitor constantPropagationVisitor = null;
+
+        while (constantPropagationVisitor == null ||
+                constantPropagationVisitor.hasChanged()) {
+            constantPropagationVisitor = new ConstantPropagationVisitor();
+            constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
+            System.out.println("After constant propagation:\n" +semanticsResult.getRootNode().toTree() + "\n\n");
+
+        }
+
+
         return semanticsResult;
     }
 
@@ -32,10 +51,15 @@ public class Optimizer implements JmmOptimization {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
+        String registerAllocation = ollirResult.getConfig().get("registerAllocation");
+        if (registerAllocation == null || registerAllocation.equals("-1")) {
+            return ollirResult;
+        }
 
         DataFlowAnalysis dataFlowAnalysis = new DataFlowAnalysis(ollirResult);
         dataFlowAnalysis.calcInOut();
-
+        dataFlowAnalysis.colorGraph();
+        dataFlowAnalysis.allocateRegisters();
         return ollirResult;
     }
 

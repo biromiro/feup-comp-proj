@@ -364,7 +364,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
 
         }
 
-        ollirCode.append(call.toString())
+        ollirCode.append(call)
                 .append(";\n");
         return "";
     }
