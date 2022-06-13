@@ -235,6 +235,8 @@ public class OllirToJasmin {
 
     public String getCode(Method method, CallInstruction callInstruction) {
         switch (callInstruction.getInvocationType()) {
+            case arraylength:
+                return getCodeArrayLength(callInstruction, method);
             case NEW:
                 return getCodeNew(callInstruction, method);
             case invokestatic:
@@ -249,12 +251,34 @@ public class OllirToJasmin {
         }
     }
 
-    public String getCodeNew(CallInstruction callInstruction, Method method) {
+    private String getCodeArrayLength(CallInstruction callInstruction, Method method) {
         StringBuilder code = new StringBuilder();
-        String returnType = ((ClassType)callInstruction.getReturnType()).getName();
-        code.append(newCall(returnType));
-        code.append("dup\n");
+        code.append(getLoad(method.getVarTable(), callInstruction.getFirstArg()));
+        System.out.println("return type: " + callInstruction.getFirstArg());
+        code.append("arraylength\n");
         return code.toString();
+    }
+
+    public String getCodeNew(CallInstruction callInstruction, Method method) {
+        callInstruction.show();
+        StringBuilder code = new StringBuilder();
+        ElementType type = callInstruction.getReturnType().getTypeOfElement();
+        if (type != ElementType.ARRAYREF) {
+            String returnType = ((ClassType)callInstruction.getReturnType()).getName();
+            code.append(getCodeNewObject(returnType));
+        } else {
+            String load = getLoad(method.getVarTable(), callInstruction.getListOfOperands().get(0));
+            code.append(getCodeNewArray(load));
+        }
+        return code.toString();
+    }
+
+    private String getCodeNewObject(String typeName) {
+        return newCall(typeName) + "dup\n";
+    }
+
+    private String getCodeNewArray(String load) {
+        return load + "newarray int\n";
     }
 
     private String newCall(String className) {
