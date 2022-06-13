@@ -1,17 +1,6 @@
-import io;
+import ioPlus;
 class HelloWorld {
-
-    public int func(int d) {
-        int a;
-        int b;
-        int c;
-        b = 2;
-        a = d;
-        c = b + d;
-        return a;
-    }
-
     public static void main(String[] args) {
-
+        ioPlus.printHelloWorld();
     }
 }
