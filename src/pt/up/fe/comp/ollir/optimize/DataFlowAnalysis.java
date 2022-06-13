@@ -1,6 +1,7 @@
 package pt.up.fe.comp.ollir.optimize;
 
 import org.specs.comp.ollir.Descriptor;
+import org.specs.comp.ollir.Instruction;
 import org.specs.comp.ollir.Method;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
@@ -50,9 +51,19 @@ public class DataFlowAnalysis {
 
     }
 
-    public void eliminateDeadVars() {
+    public boolean eliminateDeadVars() {
+        boolean hasDeadVars = false;
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
-            methodFlow.eliminateDeadVars();
+            System.out.println("-------------------BEFORE-------------------------\n");
+            for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
+                instruction.show();
+            }
+            hasDeadVars = methodFlow.eliminateDeadVars() || hasDeadVars;
+            System.out.println("------------------AFTER--------------------------------\n");
+            for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
+                instruction.show();
+            }
         }
+        return hasDeadVars;
     }
 }

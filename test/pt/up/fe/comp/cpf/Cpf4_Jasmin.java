@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 
 public class Cpf4_Jasmin {
 
-    private static boolean USE_OLLIR_EXPERIMENTAL = true;
+    private static boolean USE_OLLIR_EXPERIMENTAL = false;
 
     public static void enableOllirInputs() {
         USE_OLLIR_EXPERIMENTAL = true;
