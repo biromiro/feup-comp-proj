@@ -115,9 +115,9 @@ public class InstructionBuilder {
             if (variableType == ElementType.ARRAYREF) {
                 return storeArray(lhs, rhs);
             }
-            return JasminInstruction.istore(register);
+            return rhs + JasminInstruction.istore(register);
         } else if (type == ElementType.OBJECTREF || type == ElementType.THIS || type == ElementType.ARRAYREF) {
-            return JasminInstruction.astore(register);
+            return rhs + JasminInstruction.astore(register);
         }
 
         return "";
@@ -152,7 +152,7 @@ public class InstructionBuilder {
     }
 
     private String newObject(String className) {
-        return JasminInstruction.new_(className);
+        return JasminInstruction.new_(className) + "dup\n";
     }
 
     private String newArray(String load) {
@@ -181,8 +181,8 @@ public class InstructionBuilder {
     private String invokenonstatic(CallInstruction instruction) {
         StringBuilder code = new StringBuilder();
         ArrayList<Element> parameters = instruction.getListOfOperands();
-        code.append(loadParameters(parameters));
         code.append(load(instruction.getFirstArg()));
+        code.append(loadParameters(parameters));
 
         String className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");

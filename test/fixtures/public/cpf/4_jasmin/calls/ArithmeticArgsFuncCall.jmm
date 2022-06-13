@@ -16,6 +16,5 @@ class ArithmeticArgsFuncCall {
         a = 10;
         b = 5;
 		a = d.func(100 / 10 + 10 - 10 * 2, a + b, a - b);
-
 	}
 }
