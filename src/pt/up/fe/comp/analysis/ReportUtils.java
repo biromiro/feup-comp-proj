@@ -17,9 +17,11 @@ public class ReportUtils {
         return baseReport(at, ReportType.ERROR, Stage.SEMANTIC, message.toString());
     }
 
-    public static Report nonStaticInStaticContext(JmmNode at, String type) {
+    public static Report nonStaticInStaticContext(JmmNode at, String entity, String type) {
         StringBuilder message = new StringBuilder();
-        message.append("non-static method ");
+        message.append("non-static ");
+        message.append(entity);
+        message.append(" ");
         message.append(type);
         message.append(" cannot be referenced from a static context");
 

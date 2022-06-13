@@ -59,7 +59,15 @@ public class JasminInstruction {
                 "\n";
     }
 
-    public static String _new(String className) {
+    public static String new_(String className) {
         return "new " + className + '\n';
+    }
+
+    public static String goto_(String label) {
+        return "goto " + label + '\n';
+    }
+
+    public static String ifne(String label) {
+        return "ifne " + label + '\n';
     }
 }

@@ -6,11 +6,11 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 public class OllirUtils {
 
     public static String getCode(Symbol symbol) {
-        return "var_" + symbol.getName() + "." + getCode(symbol.getType());
+        return symbol.getName() + "." + getCode(symbol.getType());
     }
 
     public static String getCode(Symbol symbol, String index) {
-        return "var_" + symbol.getName() + "[" + index + "]." + getCode(symbol.getType(), true);
+        return symbol.getName() + "[" + index + "]." + getCode(symbol.getType(), true);
     }
 
     public static String getCode(String value, Type type) {
@@ -19,6 +19,10 @@ public class OllirUtils {
 
     public static String getTempCode(String value, Type type) {
         return "temp_" + value + "." + getCode(type);
+    }
+
+    public static String getTempCodeIndexed(String value, Type type) {
+        return "temp_" + value + "." + getCode(type, true);
     }
 
     public static String getTempCode(Symbol symbol, String index) {

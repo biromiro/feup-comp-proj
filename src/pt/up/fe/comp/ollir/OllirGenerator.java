@@ -77,6 +77,10 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         return new Symbol(type, String.valueOf(temporaryVarCounter++));
     }
 
+    private String getNextTempIndexed(Type type) {
+        return OllirUtils.getTempCodeIndexed(String.valueOf(temporaryVarCounter++), type);
+    }
+
     private String getNextTemp(Type type) {
         return OllirUtils.getTempCode(String.valueOf(temporaryVarCounter++), type);
     }
@@ -364,7 +368,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
 
         }
 
-        ollirCode.append(call.toString())
+        ollirCode.append(call)
                 .append(";\n");
         return "";
     }
@@ -450,8 +454,12 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                 .append(indexValue)
                 .append(";\n");
 
-        if (identifier.getKind().equals("Identifier"))
-            return visit(identifier, new Action(ActionType.SAVE_FOR_IDX, indexTemp));
+        if (identifier.getKind().equals("Identifier")) {
+            if (action.getAction() == ActionType.SAVE_TO_TMP)
+                return visit(identifier, new Action(ActionType.SAVE_ARR_TMP, indexTemp));
+            else return visit(identifier, new Action(ActionType.SAVE_FOR_IDX, indexTemp));
+        }
+
 
         String identifierVal = visit(identifier, action);
         Type identifierType = AnalysisUtils.getType(identifier);
@@ -535,16 +543,33 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
             return temp;
         }
 
-        if (action.getAction() != ActionType.SAVE_FOR_IDX) {
-            return parameterPrefix.toString() + OllirUtils.getCode(
+        if (action.getAction() != ActionType.SAVE_FOR_IDX
+        && action.getAction() != ActionType.SAVE_ARR_TMP) {
+            return parameterPrefix + OllirUtils.getCode(
                     new Symbol(AnalysisUtils.getType(identifier),
                             identifier.get("name")
                     ));
         }
-        return parameterPrefix + OllirUtils.getCode(
-                new Symbol(AnalysisUtils.getType(identifier),
-                        identifier.get("name")
-                ), action.getContext());
+        Type arrayValType = AnalysisUtils.getType(identifier);
+        String arrayAccess = parameterPrefix + OllirUtils.getCode(
+                new Symbol(arrayValType, identifier.get("name")),
+                action.getContext()
+        );
+
+        if (action.getAction() == ActionType.SAVE_FOR_IDX) {
+            return arrayAccess;
+        }
+
+        String temp =  getNextTempIndexed(arrayValType);
+
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(arrayValType, true))
+                .append(" ")
+                .append(arrayAccess)
+                .append(";\n");
+
+        return temp;
 
     }
 
@@ -618,24 +643,37 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         JmmNode conditionNode = jmmNode.getJmmChild(0);
         JmmNode bodyNode = jmmNode.getJmmChild(1);
 
-        ollirCode.append(loopLabel)
-                .append(":\n");
+        String conditionToNegate = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+        Type callType = AnalysisUtils.getType(conditionNode);
+        String temp =  getNextTemp(callType);
 
-        String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+        ollirCode.append(temp)
+                .append(" :=.")
+                .append(OllirUtils.getCode(callType))
+                .append(" ")
+                .append("!.")
+                .append(OllirUtils.getCode(callType))
+                .append(" ")
+                .append(conditionToNegate)
+                .append(";\n");
 
         ollirCode.append("if (")
-                .append(condition)
+                .append(temp)
                 .append(") goto ")
-                .append(bodyLabel)
-                .append(";\ngoto ")
                 .append(endLoopLabel)
                 .append(";\n")
                 .append(bodyLabel)
                 .append(":\n");
 
         visit(bodyNode, action);
+        String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
 
-        ollirCode.append(endLoopLabel)
+        ollirCode.append("if (")
+                .append(condition)
+                .append(") goto ")
+                .append(bodyLabel)
+                .append(";\n")
+                .append(endLoopLabel)
                 .append(":\n");
 
         return "";

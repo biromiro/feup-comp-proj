@@ -2,15 +2,19 @@ package pt.up.fe.comp.jasmin;
 
 import org.specs.comp.ollir.*;
 
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class OllirToJasmin {
 
     private final ClassUnit classUnit;
+    private final LabelTracker labelTracker;
 
     public OllirToJasmin(ClassUnit classUnit) {
         this.classUnit = classUnit;
         this.classUnit.buildVarTables();
+
+        this.labelTracker = new LabelTracker();
     }
 
     public String build() {
@@ -46,7 +50,7 @@ public class OllirToJasmin {
         // Methods
         for (Method method : classUnit.getMethods()) {
             if (!method.isConstructMethod()) {
-                code.append(build(method));
+                code.append(build(labelTracker, method));
             }
         }
 
@@ -78,7 +82,7 @@ public class OllirToJasmin {
         code.append(MyJasminUtils.getJasminType(classUnit, field.getFieldType()));
 
         // Initialization
-        if (field.isInitialized()){
+        if (field.isInitialized()) {
             code.append(" = ").append(field.getInitialValue());
         }
 
@@ -87,7 +91,7 @@ public class OllirToJasmin {
         return code.toString();
     }
 
-    public String build(Method method) {
+    public String build(LabelTracker labelTracker, Method method) {
         StringBuilder code = new StringBuilder();
 
         // Modifiers
@@ -114,11 +118,18 @@ public class OllirToJasmin {
 
         code.append(".limit stack 99\n").append(".limit locals 99\n");
 
-        InstructionBuilder codeBuilder = new InstructionBuilder(method);
+        InstructionBuilder builder = new InstructionBuilder(method, labelTracker);
+
+        HashMap<String, Instruction> labels = method.getLabels();
 
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
-            code.append(codeBuilder.build(instruction));
+            for (String label : labels.keySet()) {
+                if (labels.get(label) == instruction) {
+                    code.append(label).append(":\n");
+                }
+            }
+            code.append(builder.build(instruction));
         }
 
         code.append(".end method\n");

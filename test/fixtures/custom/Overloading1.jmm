@@ -1,0 +1,73 @@
+import ioPlus;
+class Overloading {
+
+    public int func(int a) {
+        return 100 * a + a;
+    }
+
+    public int func(boolean b) {
+        int c;
+        if (b) {
+            c = 5;
+        } else {
+            c = 0-5;
+        }
+        return c;
+    }
+
+    public int func(int a, boolean b) {
+        int c;
+        if (b) {
+            c = a*10;
+        } else {
+            c = 0-a*10;
+        }
+        return c;
+    }
+
+    public int func(boolean b, int a) {
+        int c;
+        if (b) {
+            c = 77 + a*100;
+        } else {
+            c = 0 - 77 - a*100;
+        }
+        return c;
+    }
+
+    public int func(int a1, int a2) {
+        return 100 * a1 + a2 * 10;
+    }
+
+    public boolean func() {
+        return false;
+    }
+
+	public static void main(String[] args) {
+	    int a;
+	    boolean b;
+	    Overloading o;
+
+	    o = new Overloading();
+
+	    a = o.func(1);
+	    ioPlus.printResult(a);
+
+	    a = o.func(a);
+	    ioPlus.printResult(a);
+
+	    a = o.func(o.func(a));
+	    ioPlus.printResult(a);
+
+	    b = false;
+	    ioPlus.printResult(o.func(b));
+
+	    b = o.func(b) < 0;
+	    ioPlus.printResult(o.func(b));
+
+	    ioPlus.printResult(o.func(a, b));
+	    ioPlus.printResult(o.func(b, a));
+        ioPlus.printResult(o.func(a, o.func()));
+        ioPlus.printResult(o.func(7, 11));
+	}
+}

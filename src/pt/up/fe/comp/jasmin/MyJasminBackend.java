@@ -14,7 +14,7 @@ public class MyJasminBackend implements JasminBackend {
         if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
             System.out.println("JASMIN CODE:");
             System.out.println(jasminCode);
-        }
+       }
 
         return new JasminResult(jasminCode);
     }
