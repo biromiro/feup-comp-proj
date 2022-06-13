@@ -26,10 +26,10 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class C4_Jasmin {
+public class Jasmin {
 
     static JasminResult getJasminResult(String filename) {
-        return TestUtils.backend(SpecsIo.getResource("fixtures/public/cpf/4_jasmin/" + filename + ".jmm"));
+        return TestUtils.backend(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"));
     }
 
     static String getResults(List<Integer> results) {

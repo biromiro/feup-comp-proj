@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 
-public class C3_Ollir {
+public class Ollir {
 
     static OllirResult getOllirResult(String filename) {
         return TestUtils.optimize(SpecsIo.getResource("fixtures/public/cpf/3_ollir/" + filename));

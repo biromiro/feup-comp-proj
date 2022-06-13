@@ -22,7 +22,7 @@ import pt.up.fe.specs.util.SpecsIo;
 
 import static org.junit.Assert.assertEquals;
 
-public class C2_SemanticAnalysis {
+public class SemanticAnalysis {
 
     static JasminResult getJasminResult(String filename) {
         return TestUtils.backend(SpecsIo.getResource("fixtures/public/cpf/2_semantic_analysis/" + filename));

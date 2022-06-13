@@ -111,6 +111,12 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
                 .findFirst();
 
         if (fieldSymbol.isPresent()) {
+            if (jmmNode.getAncestor("MainMethodDef").isPresent()) {
+                putUnknownType(jmmNode);
+                reports.add(ReportUtils.nonStaticInStaticContext(jmmNode, "variable", "this"));
+                return reports;
+            }
+
             putType(jmmNode, fieldSymbol.get().getType());
             return reports;
         }
@@ -129,8 +135,16 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
     }
 
     private List<Report> visitThisKeyword(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+
+        if (jmmNode.getAncestor("MethodDef").isEmpty()) {
+            putUnknownType(jmmNode);
+            reports.add(ReportUtils.nonStaticInStaticContext(jmmNode, "variable", "this"));
+            return reports;
+        }
+
         putType(jmmNode, new Type(symbolTable.getClassName(), false));
-        return new ArrayList<>();
+        return reports;
     }
 
     private List<Report> visitMethodCall(JmmNode jmmNode, SymbolTable symbolTable) {
@@ -147,7 +161,7 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
 
                 if (methodExists) {
                     String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
-                    reports.add(ReportUtils.nonStaticInStaticContext(jmmNode, symbolName));
+                    reports.add(ReportUtils.nonStaticInStaticContext(jmmNode, "method", symbolName));
                 } else if (symbolTable.getSuper() == null) {
                     String symbolName = AnalysisUtils.getMethodSymbolName(methodSignature);
                     reports.add(ReportUtils.cannotFindSymbolReport(jmmNode, symbolName));
