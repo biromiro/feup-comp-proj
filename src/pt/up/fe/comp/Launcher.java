@@ -112,7 +112,7 @@ public class Launcher {
         SpecsLogs.info("Executing with args: " + Arrays.toString(args));
 
         Map<String, String> config = parseCommandArgs(args);
-        if (config.get("debug").equals("true")) {
+        if (config.getOrDefault("debug", "false").equals("true")) {
             System.out.println("Debug mode enabled\n\n");
         }
         String input = readFile(config.get("inputFile"));

@@ -23,7 +23,7 @@ public class Optimizer implements JmmOptimization {
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
-        if (ollirResult.getConfig().get("debug").equals("true")) {
+        if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
