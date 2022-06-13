@@ -254,7 +254,6 @@ public class OllirToJasmin {
     private String getCodeArrayLength(CallInstruction callInstruction, Method method) {
         StringBuilder code = new StringBuilder();
         code.append(getLoad(method.getVarTable(), callInstruction.getFirstArg()));
-        System.out.println("return type: " + callInstruction.getFirstArg());
         code.append("arraylength\n");
         return code.toString();
     }
