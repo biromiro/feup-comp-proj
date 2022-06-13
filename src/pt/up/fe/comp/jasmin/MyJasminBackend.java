@@ -1,12 +1,9 @@
 package pt.up.fe.comp.jasmin;
 
 import org.specs.comp.ollir.ClassUnit;
-import org.specs.comp.ollir.Method;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
-
-import java.util.ArrayList;
 
 public class MyJasminBackend implements JasminBackend {
     @Override
@@ -14,10 +11,11 @@ public class MyJasminBackend implements JasminBackend {
         ClassUnit ollir = ollirResult.getOllirClass();
         String jasminCode = new OllirToJasmin(ollir).getCode();
 
-        if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
+
+        // if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
             System.out.println("JASMIN CODE:");
             System.out.println(jasminCode);
-        }
+       // }
 
         return new JasminResult(jasminCode);
     }

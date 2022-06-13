@@ -1,21 +1,16 @@
 package pt.up.fe.comp.jasmin;
 
-import com.javacc.parser.tree.ReturnType;
-import com.sun.jdi.IntegerType;
 import org.specs.comp.ollir.*;
-import pt.up.fe.comp.VOID;
-import pt.up.fe.specs.util.SpecsIo;
-import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class OllirToJasmin {
 
     private final ClassUnit classUnit;
+    private int comparisons = 0;
 
     public OllirToJasmin(ClassUnit classUnit) {
         this.classUnit = classUnit;
@@ -99,7 +94,7 @@ public class OllirToJasmin {
         code.append(getJasminType(field.getFieldType()));
 
         // Initialization
-        if (field.isInitialized()){
+        if (field.isInitialized()) {
             code.append(" = ").append(field.getInitialValue());
         }
 
@@ -135,8 +130,15 @@ public class OllirToJasmin {
 
         code.append(".limit stack 99\n").append(".limit locals 99\n");
 
+        HashMap<String, Instruction> labels = method.getLabels();
+
         // Method instructions
         for (Instruction instruction : method.getInstructions()) {
+            for (String label : labels.keySet()) {
+                if (labels.get(label) == instruction) {
+                    code.append(label + ":\n");
+                }
+            }
             code.append(getCode(method, instruction));
         }
 
@@ -163,8 +165,34 @@ public class OllirToJasmin {
         if (instruction instanceof PutFieldInstruction) {
             return getCode(method, (PutFieldInstruction) instruction);
         }
+        if (instruction instanceof CondBranchInstruction) {
+            return getCode(method, (CondBranchInstruction) instruction);
+        }
+        if (instruction instanceof GotoInstruction) {
+            return getCode(method, (GotoInstruction) instruction);
+        }
 
         throw new NotImplementedException(instruction.getClass());
+    }
+
+    public String getCode(Method method, GotoInstruction instruction) {
+        return "goto " + instruction.getLabel() + "\n";
+    }
+
+    public String getCode(Method method, CondBranchInstruction instruction) {
+        StringBuilder code = new StringBuilder();
+        Element condition = ((SingleOpCondInstruction) instruction).getCondition().getSingleOperand();
+        /*code.append(getNoper(method.getVarTable(), ((SingleOpCondInstruction) instruction).getCondition()));
+        if (condition.isLiteral()) {
+            code.append("ifne ").append(instruction.getLabel());
+        } else {
+            code.append("if_icmplt ").append(instruction.getLabel());
+        }*/
+        //code.append(getNoper(method.getVarTable(), ((SingleOpCondInstruction) instruction).getCondition()));
+        code.append(getLoad(method.getVarTable(), condition));
+        code.append("ifne ").append(instruction.getLabel());
+        code.append("\n");
+        return code.toString();
     }
 
     public String getCode(Method method, GetFieldInstruction fieldInstruction) {
@@ -178,8 +206,8 @@ public class OllirToJasmin {
 
     private String getField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
-        String fieldName = ((Operand)fieldElement).getName();
-        String className = getFullyQualifiedName(((ClassType)classElement.getType()).getName());
+        String fieldName = ((Operand) fieldElement).getName();
+        String className = getFullyQualifiedName(((ClassType) classElement.getType()).getName());
         code.append("getfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
@@ -187,8 +215,8 @@ public class OllirToJasmin {
 
     private String putField(Element classElement, Element fieldElement) {
         StringBuilder code = new StringBuilder();
-        String fieldName = ((Operand)fieldElement).getName();
-        String className = getFullyQualifiedName(((ClassType)classElement.getType()).getName());
+        String fieldName = ((Operand) fieldElement).getName();
+        String className = getFullyQualifiedName(((ClassType) classElement.getType()).getName());
         code.append("putfield ").append(className).append("/")
                 .append(fieldName).append(" ").append(getJasminType(fieldElement.getType())).append("\n");
         return code.toString();
@@ -207,6 +235,8 @@ public class OllirToJasmin {
 
     public String getCode(Method method, CallInstruction callInstruction) {
         switch (callInstruction.getInvocationType()) {
+            case arraylength:
+                return getCodeArrayLength(callInstruction, method);
             case NEW:
                 return getCodeNew(callInstruction, method);
             case invokestatic:
@@ -221,12 +251,33 @@ public class OllirToJasmin {
         }
     }
 
-    public String getCodeNew(CallInstruction callInstruction, Method method) {
+    private String getCodeArrayLength(CallInstruction callInstruction, Method method) {
         StringBuilder code = new StringBuilder();
-        String returnType = ((ClassType)callInstruction.getReturnType()).getName();
-        code.append(newCall(returnType));
-        code.append("dup\n");
+        code.append(getLoad(method.getVarTable(), callInstruction.getFirstArg()));
+        code.append("arraylength\n");
         return code.toString();
+    }
+
+    public String getCodeNew(CallInstruction callInstruction, Method method) {
+        callInstruction.show();
+        StringBuilder code = new StringBuilder();
+        ElementType type = callInstruction.getReturnType().getTypeOfElement();
+        if (type != ElementType.ARRAYREF) {
+            String returnType = ((ClassType) callInstruction.getReturnType()).getName();
+            code.append(getCodeNewObject(returnType));
+        } else {
+            String load = getLoad(method.getVarTable(), callInstruction.getListOfOperands().get(0));
+            code.append(getCodeNewArray(load));
+        }
+        return code.toString();
+    }
+
+    private String getCodeNewObject(String typeName) {
+        return newCall(typeName) + "dup\n";
+    }
+
+    private String getCodeNewArray(String load) {
+        return load + "newarray int\n";
     }
 
     private String newCall(String className) {
@@ -254,6 +305,10 @@ public class OllirToJasmin {
         if (type == ElementType.INT32 ||
                 type == ElementType.STRING ||
                 type == ElementType.BOOLEAN) {
+            ElementType variableType = table.get(((Operand) lhs).getName()).getVarType().getTypeOfElement();
+            if (variableType == ElementType.ARRAYREF) {
+                return getStoreArray(lhs, rhs, table);
+            }
             return rhs + istore(register);
         } else if (type == ElementType.OBJECTREF ||
                 type == ElementType.THIS ||
@@ -264,12 +319,17 @@ public class OllirToJasmin {
         return "";
     }
 
+    private String getStoreArray(Element element, String rhs, HashMap<String, Descriptor> table) {
+        int arrayRegister = table.get(((Operand) element).getName()).getVirtualReg();
+        int indexRegister = table.get(((Operand) ((ArrayOperand) element).getIndexOperands().get(0)).getName()).getVirtualReg();
+        return aload(arrayRegister) + iload(indexRegister) + rhs + "iastore\n";
+    }
+
     private String astore(int register) {
         String instruction = "astore";
         if (register >= 0 && register <= 3) {
             instruction = instruction + "_";
-        }
-        else {
+        } else {
             instruction = instruction + " ";
         }
         return instruction + register + "\n";
@@ -279,8 +339,7 @@ public class OllirToJasmin {
         String instruction = "istore";
         if (register >= 0 && register <= 3) {
             instruction = instruction + "_";
-        }
-        else {
+        } else {
             instruction = instruction + " ";
         }
         return instruction + register + "\n";
@@ -332,14 +391,66 @@ public class OllirToJasmin {
         String rightLoad = getLoad(table, rhs);
         OperationType type = instruction.getOperation().getOpType();
 
-        //grammar also accepts && and <
+        if (type == OperationType.LTH || type == OperationType.ANDB) {
+            code.append(getBoolean(type, leftLoad, rightLoad));
+        } else {
+            code.append(leftLoad);
+            code.append(rightLoad);
+            code.append(getArithmetic(type));
+        }
+        return code.toString();
+    }
 
+    private String getBoolean(OperationType type, String leftLoad, String rightLoad) {
+        return switch (type) {
+            case LTH -> getLth(leftLoad, rightLoad);
+            case ANDB -> getAndB(leftLoad, rightLoad);
+            default -> "";
+        };
+    }
+
+    private int nextLabelNumber() {
+        return this.comparisons++;
+    }
+
+    private String getLth(String leftLoad, String rightLoad) {
+        StringBuilder code = new StringBuilder();
         code.append(leftLoad);
         code.append(rightLoad);
-        code.append(getArithmetic(type));
+        String label1 = "LTH_" + nextLabelNumber();
+        String label2 = "LTH_" + nextLabelNumber();
+        code.append("if_icmplt ").append(label1).append("\n")
+                .append(iconst("0")).append("goto ")
+                .append(label2).append("\n").append(label1).append(":\n")
+                .append(iconst("1")).append(label2).append(":\n");
+        return code.toString();
+    }
+
+    private String getAndB(String leftLoad, String rightLoad) {
+        StringBuilder code = new StringBuilder();
+        String label1 = "ANDB_" + nextLabelNumber();
+        String label2 = "ANDB_" + nextLabelNumber();
+
+        // if any side is 0, then result is false
+        code.append(leftLoad);
+        code.append("ifeq ").append(label1).append("\n");
+
+        code.append(rightLoad);
+        code.append("ifeq ").append(label1).append("\n");
+
+        // result is 1
+        code.append(iconst("1"));
+        code.append("goto ").append(label2).append("\n");
+
+        // result is 0
+        code.append(label1).append(":\n");
+        code.append(iconst("0"));
+
+        code.append(label2).append(":\n");
 
         return code.toString();
     }
+
 
     private String getArithmetic(OperationType type) {
         return switch (type) {
@@ -367,6 +478,10 @@ public class OllirToJasmin {
 
         // instruction of the iload family
         if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
+            ElementType variableType = table.get(((Operand) element).getName()).getVarType().getTypeOfElement();
+            if (variableType == ElementType.ARRAYREF) {
+                return getLoadArray(element, table);
+            }
             int register = table.get(((Operand) element).getName()).getVirtualReg();
             return iload(register);
         }
@@ -378,6 +493,12 @@ public class OllirToJasmin {
         }
 
         return "";
+    }
+
+    private String getLoadArray(Element element, HashMap<String, Descriptor> table) {
+        int arrayRegister = table.get(((Operand) element).getName()).getVirtualReg();
+        int indexRegister = table.get(((Operand) ((ArrayOperand) element).getIndexOperands().get(0)).getName()).getVirtualReg();
+        return aload(arrayRegister) + iload(indexRegister) + "iaload\n";
     }
 
     private String aload(int register) {
@@ -394,8 +515,7 @@ public class OllirToJasmin {
         String instruction = "iload";
         if (register >= 0 && register <= 3) {
             instruction = instruction + "_";
-        }
-        else {
+        } else {
             instruction = instruction + " ";
         }
         return instruction + register + "\n";
@@ -406,17 +526,13 @@ public class OllirToJasmin {
         String instruction = "";
         if (integer == -1) {
             instruction = "iconst_m1";
-        }
-        else if (integer >= 0 && integer <= 5) {
+        } else if (integer >= 0 && integer <= 5) {
             instruction = "iconst_" + num;
-        }
-        else if (integer >= -128 && integer <= 127) {
+        } else if (integer >= -128 && integer <= 127) {
             instruction = "bipush " + num;
-        }
-        else if (integer >= -32768 && integer <= 32767) {
+        } else if (integer >= -32768 && integer <= 32767) {
             instruction = "sipush " + num;
-        }
-        else {
+        } else {
             instruction = "ldc " + num;
         }
         return instruction + "\n";
@@ -489,13 +605,11 @@ public class OllirToJasmin {
         code.append("\n");
 
 
-
-
         return code.toString();
     }
 
     public String getCode(Method method, ReturnInstruction returnInstruction) {
-        if(!returnInstruction.hasReturnValue())
+        if (!returnInstruction.hasReturnValue())
             return "return\n";
 
         StringBuilder code = new StringBuilder();
@@ -503,10 +617,9 @@ public class OllirToJasmin {
         Element result = returnInstruction.getOperand();
         code.append(getLoad(method.getVarTable(), result));
         ElementType type = result.getType().getTypeOfElement();
-        if(type == ElementType.INT32 || type == ElementType.BOOLEAN) {
+        if (type == ElementType.INT32 || type == ElementType.BOOLEAN) {
             code.append("ireturn\n");
-        }
-        else {
+        } else {
             code.append("areturn\n");
         }
 
@@ -525,7 +638,7 @@ public class OllirToJasmin {
 
     public String getJasminType(Type type) {
         if (type instanceof ArrayType) {
-            return "[" + getJasminType(((ArrayType)type).getTypeOfElements());
+            return "[" + getJasminType(((ArrayType) type).getTypeOfElements());
         }
         if (type instanceof ClassType) {
             return "L" + getFullyQualifiedName(((ClassType) type).getName()) + ";";
