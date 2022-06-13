@@ -77,6 +77,10 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         return new Symbol(type, String.valueOf(temporaryVarCounter++));
     }
 
+    private String getNextTempIndexed(Type type) {
+        return OllirUtils.getTempCodeIndexed(String.valueOf(temporaryVarCounter++), type);
+    }
+
     private String getNextTemp(Type type) {
         return OllirUtils.getTempCode(String.valueOf(temporaryVarCounter++), type);
     }
@@ -556,7 +560,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
             return arrayAccess;
         }
 
-        String temp =  getNextTemp(arrayValType);
+        String temp =  getNextTempIndexed(arrayValType);
 
         ollirCode.append(temp)
                 .append(" :=.")
