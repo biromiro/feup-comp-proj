@@ -1,0 +1,26 @@
+import ioPlus;
+class HelloWorld {
+    public int inlineArrayAssign() {
+        (new int[3])[0] = 5;
+        return 0;
+    }
+
+    public int aux1(int[] a) { return a.length; }
+    public int inlineArrayArg() {
+        return this.aux1(new int[3]);
+    }
+
+    public int aux2() { return 0; }
+    public int inlineOperation() {
+        return this.aux2() + 5;
+    }
+
+    public static void main(String[] args) {
+        HelloWorld hw;
+        hw = new HelloWorld();
+
+        ioPlus.printResult(hw.inlineArrayAssign());
+        ioPlus.printResult(hw.inlineArrayArg());
+        ioPlus.printResult(hw.inlineOperation());
+    }
+}

@@ -27,7 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class Optimizations {
+public class CustomTestsOptimizations {
 
 
     static OllirResult getOllirResult(String filename) {

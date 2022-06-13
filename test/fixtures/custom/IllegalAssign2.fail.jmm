@@ -1,0 +1,14 @@
+class HelloWorld {
+    public int assignArray() {
+        int[] a;
+        a = new int[1];
+        (new int[1]) = a;
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        HelloWorld hw;
+        hw = new HelloWorld();
+        hw.assignArray();
+    }
+}

@@ -1,0 +1,44 @@
+import ioPlus;
+class HelloWorld {
+    int a;
+
+    public int setA(int other) {
+        a = other;
+        return a;
+    }
+
+    public int getA() {
+        return a;
+    }
+
+    public HelloWorld newObj() {
+        return new HelloWorld();
+    }
+
+    public int[] newArray() {
+        return new int[5];
+    }
+
+    public int newArrayLen() {
+        return (new int[5]).length;
+    }
+
+    public static void main(String[] args) {
+        HelloWorld hw1;
+        HelloWorld hw2;
+        int[] arr;
+
+        hw1 = new HelloWorld().newObj().newObj().newObj();
+        hw1.setA(1);
+        hw2 = hw1.newObj();
+        hw2.setA(2);
+
+        ioPlus.printResult(hw1.getA());
+        ioPlus.printResult(hw2.getA());
+
+        arr = hw1.newArray();
+        ioPlus.printResult(arr.length);
+
+        ioPlus.printResult(hw1.newArrayLen());
+    }
+}

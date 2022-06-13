@@ -1,0 +1,31 @@
+import ioPlus;
+class Obj {
+    int a;
+    public Obj setA(int other) {
+        a = other;
+        return this;
+    }
+
+    public Obj increment() {
+        a = a + 1;
+        return this;
+    }
+
+    public int getA() {
+        ioPlus.printResult(a);
+        return a;
+    }
+
+    public static void main(String[] args) {
+        new Obj()
+            .setA(0)
+            .increment()
+            .increment()
+            .increment()
+            .increment()
+            .increment()
+            .increment()
+            .increment()
+            .getA();
+    }
+}

@@ -1,0 +1,14 @@
+class HelloWorld {
+    public int assignThis() {
+        HelloWorld hw;
+        hw = new HelloWorld();
+        this = hw;
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        HelloWorld hw;
+        hw = new HelloWorld();
+        hw.assignThis();
+    }
+}
