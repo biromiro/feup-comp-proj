@@ -469,20 +469,41 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
             else return visit(identifier, new Action(ActionType.SAVE_FOR_IDX, indexTemp));
         }
 
-        String identifierVal = visit(identifier, new Action(ActionType.SAVE_TO_TMP));
+        String temp = visit(identifier, new Action(ActionType.SAVE_TO_TMP));
         Type identifierType = AnalysisUtils.getType(identifier);
-        Symbol tempIDSymbol = getNextTempSymbol(identifierType);
-        String temp = OllirUtils.getTempCode(tempIDSymbol.getName(), tempIDSymbol.getType());
+        String temp2 = getNextTempIndexed(identifierType);
 
-        ollirCode.append(temp)
+        ollirCode.append(temp2)
                 .append(" :=.")
-                .append(OllirUtils.getCode(indexType))
+                .append(OllirUtils.getCode(identifierType, true))
                 .append(" ")
-                .append(identifierVal)
+                .append(getName(temp))
+                .append("[")
+                .append(indexTemp)
+                .append("].")
+                .append(OllirUtils.getCode(identifierType, true))
                 .append(";\n");
 
-        return temp;
+        /*if (action.getAction() == ActionType.SAVE_TO_TMP) {
 
+            String temp2 =  getNextTempIndexed(identifierType);
+
+            ollirCode.append(temp2)
+                    .append(" :=.")
+                    .append(OllirUtils.getCode(identifierType, true))
+                    .append(" ")
+                    .append(temp)
+                    .append(";\n");
+
+            return temp2;
+        }*/
+
+        return temp2;
+
+    }
+
+    private String getName(String temp) {
+        return temp.split("\\.",2)[0];
     }
 
     private String newObjectVisit(JmmNode jmmNode, Action action) {

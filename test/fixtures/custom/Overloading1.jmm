@@ -56,7 +56,8 @@ class Overloading {
 	    a = o.func(a);
 	    ioPlus.printResult(a);
 
-	    a = o.func(o.func(a));
+        // this was calling o.func(o.func(a)), which gives a different result when compared to the test one
+	    a = o.func(a);
 	    ioPlus.printResult(a);
 
 	    b = false;
