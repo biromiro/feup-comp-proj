@@ -189,4 +189,39 @@ public class CustomTests {
                 1, 2, 3, 4, 5
         )));
     }
+
+    @Test
+    public void ifElse1() {
+        CpUtils.runJasmin(getJasminResult("IfElse1"), getResults(Arrays.asList(
+                1, 0, 1, 0, 2, 0, 2, 12, 2
+        )));
+    }
+
+    @Test
+    public void ifElse2() {
+        CpUtils.runJasmin(getJasminResult("IfElse2"), getResults(Arrays.asList(
+                0, 1, 1, 1, 0, 0
+        )));
+    }
+
+    @Test
+    public void while1() {
+        CpUtils.runJasmin(getJasminResult("While1"), getResults(Arrays.asList(
+            0, 1, 2, 3, 4, 50, 5, 16, 8, 4, 2, 1
+        )));
+    }
+
+    @Test
+    public void while2() {
+        CpUtils.runJasmin(getJasminResult("While2"), getResults(Arrays.asList(
+                0, 0, 1, 0, 1, 2, 0, 1, 2, 3
+        )));
+    }
+
+    @Test
+    public void while3() {
+        CpUtils.runJasmin(getJasminResult("While3"), getResults(Arrays.asList(
+                100, 200, 300, 400
+        )));
+    }
 }
