@@ -6,12 +6,12 @@ import pt.up.fe.specs.util.exceptions.NotImplementedException;
 public class MyJasminUtils {
     public static String getFullyQualifiedName(ClassUnit context, String className) {
         for (String importString : context.getImports()) {
-            var splittedImports = importString.split("\\.");
+            var splitImports = importString.split("\\.");
             String lastName;
-            if (splittedImports.length == 0) {
+            if (splitImports.length == 0) {
                 lastName = importString;
             } else {
-                lastName = splittedImports[splittedImports.length - 1];
+                lastName = splitImports[splitImports.length - 1];
             }
             if (lastName.equals(className)) {
                 return importString.replace('.', '/');
