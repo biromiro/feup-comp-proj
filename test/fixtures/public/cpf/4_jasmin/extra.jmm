@@ -1,0 +1,14 @@
+import ioPlus;
+
+class HelloWorld {
+    public static void main(String[] args) {
+        int i;
+        HelloWorld var;
+        i = 0;
+        while (i < 1) {
+           var = new HelloWorld();
+
+           i = i + 1;
+        }
+    }
+}

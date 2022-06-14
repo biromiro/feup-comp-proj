@@ -133,7 +133,7 @@ public class OllirToJasmin {
 
             if (instruction.getInstType() == InstructionType.CALL) {
                 ElementType returnType = ((CallInstruction) instruction).getReturnType().getTypeOfElement();
-                if (returnType != ElementType.VOID) {
+                if (returnType != ElementType.VOID || ((CallInstruction) instruction).getInvocationType() == CallType.invokespecial) {
                     code.append("pop\n");
                 }
             }
