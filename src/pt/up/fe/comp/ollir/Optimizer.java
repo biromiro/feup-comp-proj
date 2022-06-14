@@ -17,10 +17,17 @@ public class Optimizer implements JmmOptimization {
         }
 
         ConstantPropagationVisitor constantPropagationVisitor;
+
         do {
             constantPropagationVisitor = new ConstantPropagationVisitor();
             constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
         } while (constantPropagationVisitor.hasChanged());
+
+        // simplify while
+        constantPropagationVisitor = new ConstantPropagationVisitor(true);
+        constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
+
+        System.out.println(semanticsResult.getRootNode().toTree());
 
         return semanticsResult;
     }

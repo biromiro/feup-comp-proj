@@ -662,12 +662,27 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
     }
 
     private String whileStatementVisit(JmmNode jmmNode, Action action) {
-        String loopLabel = getNextLabel(LabelType.LOOP);
+        Optional<String> type = jmmNode.getOptional("dowhile");
         String bodyLabel = getNextLabel(LabelType.BODY);
-        String endLoopLabel = getNextLabel(LabelType.ENDLOOP);
-
         JmmNode conditionNode = jmmNode.getJmmChild(0);
         JmmNode bodyNode = jmmNode.getJmmChild(1);
+
+        if (type.isPresent()) {
+            ollirCode.append(bodyLabel)
+                    .append(":\n");
+
+            visit(bodyNode, action);
+            String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+            ollirCode.append("if (")
+                    .append(condition)
+                    .append(") goto ")
+                    .append(bodyLabel)
+                    .append(";\n");
+            return "";
+        }
+        String endLoopLabel = getNextLabel(LabelType.ENDLOOP);
+
+
 
         String conditionToNegate = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
         Type callType = AnalysisUtils.getType(conditionNode);
