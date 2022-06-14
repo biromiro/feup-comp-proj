@@ -74,4 +74,8 @@ public class JasminInstruction {
     public static String if_icmplt(String label) {
         return "if_icmplt " + label + '\n';
     }
+
+    public static String iflt(String label) {
+        return "iflt " + label + '\n';
+    }
 }

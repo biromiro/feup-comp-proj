@@ -373,8 +373,12 @@ public class InstructionBuilder {
             Element leftOperand = instruction.getOperands().get(0);
             Element rightOperand = instruction.getOperands().get(1);
             code.append(load(leftOperand));
-            code.append(load(rightOperand));
-            code.append(JasminInstruction.if_icmplt(instruction.getLabel()));
+            if (rightOperand.isLiteral() && ((LiteralElement) rightOperand).getLiteral().equals("0")) {
+                code.append(JasminInstruction.iflt(instruction.getLabel()));
+            } else  {
+                code.append(load(rightOperand));
+                code.append(JasminInstruction.if_icmplt(instruction.getLabel()));
+            }
         }
         code.append("\n");
         return code.toString();
