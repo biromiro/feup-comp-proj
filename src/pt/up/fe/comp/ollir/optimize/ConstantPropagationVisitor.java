@@ -15,7 +15,7 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     private boolean hasChanged = false;
     private boolean simplifyWhile;
     public ConstantPropagationVisitor() {
-        new ConstantPropagationVisitor(false);
+        this(false);
     }
     public ConstantPropagationVisitor(boolean simplifyWhile){
         this.simplifyWhile = simplifyWhile;
