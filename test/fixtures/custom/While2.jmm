@@ -3,16 +3,19 @@ import ioPlus;
 class HelloWorld {
 
     public static void main(String[] args) {
+        int[] arr;
         int i;
-        int j;
+
+        arr = new int[4];
+        arr[0] = 100;
+        arr[1] = 200;
+        arr[2] = 300;
+        arr[3] = 400;
+
 
         i = 0;
-        while (i < 5) {
-            j = 0;
-            while (j < i) {
-                 ioPlus.printResult(j);
-                 j = j + 1;
-            }
+        while (i < arr.length) {
+            ioPlus.printResult(arr[i]);
             i = i + 1;
         }
     }

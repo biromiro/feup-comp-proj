@@ -1,21 +1,11 @@
 import ioPlus;
 
 class HelloWorld {
-
     public static void main(String[] args) {
-        int[] arr;
         int i;
-
-        arr = new int[4];
-        arr[0] = 100;
-        arr[1] = 200;
-        arr[2] = 300;
-        arr[3] = 400;
-
-
         i = 0;
-        while (i < arr.length) {
-            ioPlus.printResult(arr[i]);
+        while (i < 1) {
+           new HelloWorld();
             i = i + 1;
         }
     }

@@ -2,48 +2,18 @@ import ioPlus;
 
 class HelloWorld {
 
-    public boolean isEven(int i) {
-        int result;
-        while (1 < i) {
-            i = i - 2;
-        }
-
-        if (0 < i) {
-            result = 0;
-        } else {
-            result = 1;
-        }
-        return result;
-    }
-
     public static void main(String[] args) {
         int i;
-        boolean b;
-
-        while (false) {
-            ioPlus.printHelloWorld();
-        }
+        int j;
 
         i = 0;
         while (i < 5) {
-            ioPlus.printResult(i);
-            i = i + 1;
-        }
-
-        b = true;
-        while (b) {
-            ioPlus.printResult(50);
-            b = false;
-        }
-
-        i = 5;
-        while (1 < i) {
-            ioPlus.printResult(i);
-            if (new HelloWorld().isEven(i)) {
-                i = i / 2;
-            } else {
-                i = i * 3 + 1;
+            j = 0;
+            while (j < i) {
+                 ioPlus.printResult(j);
+                 j = j + 1;
             }
+            i = i + 1;
         }
     }
 }

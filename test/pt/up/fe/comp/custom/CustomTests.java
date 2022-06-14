@@ -90,6 +90,16 @@ public class CustomTests {
     }
 
     @Test
+    public void illegalAssign3() {
+        TestUtils.mustFail(getSemanticsResult("illegalAssign3.fail").getReports());
+    }
+
+    @Test
+    public void illegalAssign4() {
+        TestUtils.mustFail(getSemanticsResult("illegalAssign4.fail").getReports());
+    }
+
+    @Test
     public void variablesAndFields1() {
         CpUtils.runJasmin(getJasminResult("VariablesAndFields1"), getResults(Arrays.asList(
                 100, 101, 102, 103, 104, 100, 2, 3
@@ -207,21 +217,26 @@ public class CustomTests {
     @Test
     public void while1() {
         CpUtils.runJasmin(getJasminResult("While1"), getResults(Arrays.asList(
-            0, 1, 2, 3, 4, 50, 5, 16, 8, 4, 2, 1
+                0, 0, 1, 0, 1, 2, 0, 1, 2, 3
         )));
     }
 
     @Test
     public void while2() {
         CpUtils.runJasmin(getJasminResult("While2"), getResults(Arrays.asList(
-                0, 0, 1, 0, 1, 2, 0, 1, 2, 3
+                100, 200, 300, 400
         )));
     }
 
     @Test
     public void while3() {
-        CpUtils.runJasmin(getJasminResult("While3"), getResults(Arrays.asList(
-                100, 200, 300, 400
+        CpUtils.runJasmin(getJasminResult("While3"), getResults(List.of()));
+    }
+
+    @Test
+    public void while4() {
+        CpUtils.runJasmin(getJasminResult("While4"), getResults(Arrays.asList(
+                0, 1, 2, 3, 4, 50, 5, 16, 8, 4, 2
         )));
     }
 }

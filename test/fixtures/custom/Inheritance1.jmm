@@ -3,50 +3,32 @@ import inheritanceAB.B;
 import ioPlus;
 
 class HelloWorld {
-    // B extends A. How to convert between A and B?
-    public int f1aux(A a) { return A.a(); }
+    public int f1aux(A a) { int result; result = A.a(); return result; }
     public int f1() {
-        return this.f1aux(new B());
-        /*
-         * temp_0.A :=.A new(A).A;
-         *
-         * should it be:
-         * invokevirtual(this, "duvida1_aux", temp_0.A).i32;
-         * OR
-         * invokevirtual(this, "duvida1_aux", temp_0.B).i32;
-         */
+        int result;
+        result = this.f1aux(new B());
+        return result;
     }
     public int f2() {
+        int result;
         A a;
         a = new B();
-        /*
-         * should it be:
-         * var_a.A :=.A new(B).B;
-         * OR
-         * var_a.A :=.A new(B).A;
-         */
 
-        return a.a();
+        result = a.a();
+        return result;
     }
+    /*
     public A f3aux() {
         B b;
         return b;
     }
     public A f3() {
         return this.f3aux().a();
-        /*
-         * should it be:
-         * et.B var_b.B;
-         * OR
-         * et.A var_b.A;
-         */
     }
+    */
 
     public static void main(String[] args) {
         HelloWorld hw;
         hw = new HelloWorld();
-        ioPlus.printResult(hw.f1());
-        ioPlus.printResult(hw.f2());
-        ioPlus.printResult(hw.f3());
     }
 }
