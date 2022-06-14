@@ -159,7 +159,7 @@ public class CustomTests {
     @Test
     public void inheritance1() {
         CpUtils.runJasmin(getJasminResult("Inheritance1"), getResults(Arrays.asList(
-                2, 2, 2
+                2, 2
         )));
     }
 

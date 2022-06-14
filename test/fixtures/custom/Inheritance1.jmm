@@ -3,12 +3,6 @@ import inheritanceAB.B;
 import ioPlus;
 
 class HelloWorld {
-    public int f1aux(A a) { int result; result = A.a(); return result; }
-    public int f1() {
-        int result;
-        result = this.f1aux(new B());
-        return result;
-    }
     public int f2() {
         int result;
         A a;
@@ -17,18 +11,22 @@ class HelloWorld {
         result = a.a();
         return result;
     }
-    /*
+
     public A f3aux() {
         B b;
+        b = new B();
         return b;
     }
-    public A f3() {
-        return this.f3aux().a();
+    public int f3() {
+        int result;
+        result = this.f3aux().a();
+        return result;
     }
-    */
 
     public static void main(String[] args) {
         HelloWorld hw;
         hw = new HelloWorld();
+        ioPlus.printResult(hw.f2());
+        ioPlus.printResult(hw.f3());
     }
 }
