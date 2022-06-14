@@ -116,9 +116,11 @@ public class OllirToJasmin {
         // Method return type
         code.append(methodParamTypes).append(")").append(MyJasminUtils.getJasminType(classUnit, method.getReturnType())).append("\n");
 
-        code.append(".limit stack 99\n").append(".limit locals 99\n");
+        // Method body
+        StringBuilder body = new StringBuilder();
 
         InstructionBuilder builder = new InstructionBuilder(method, labelTracker);
+        JasminInstruction.stackLimit.reset();
 
         HashMap<String, Instruction> labels = method.getLabels();
 
@@ -126,19 +128,24 @@ public class OllirToJasmin {
         for (Instruction instruction : method.getInstructions()) {
             for (String label : labels.keySet()) {
                 if (labels.get(label) == instruction) {
-                    code.append(label).append(":\n");
+                    body.append(label).append(":\n");
                 }
             }
-            code.append(builder.build(instruction));
+            body.append(builder.build(instruction));
 
             if (instruction.getInstType() == InstructionType.CALL) {
                 ElementType returnType = ((CallInstruction) instruction).getReturnType().getTypeOfElement();
                 if (returnType != ElementType.VOID || ((CallInstruction) instruction).getInvocationType() == CallType.invokespecial) {
-                    code.append(JasminInstruction.pop());
+                    body.append(JasminInstruction.pop());
                 }
             }
 
         }
+
+        // Stack and locals limits
+        code.append(".limit stack ").append(JasminInstruction.stackLimit.size()).append('\n');
+        code.append(".limit locals 99\n");
+        code.append(body);
 
         code.append(".end method\n");
         return code.toString();

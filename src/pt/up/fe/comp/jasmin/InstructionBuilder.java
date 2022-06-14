@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 public class InstructionBuilder {
     private final Method method;
-
     private final LabelTracker labelTracker;
 
     public InstructionBuilder(Method method, LabelTracker labelTracker){
@@ -336,7 +335,6 @@ public class InstructionBuilder {
 
         return code.toString();
     }
-
 
     private String build(GotoInstruction instruction) {
         return JasminInstruction.goto_(instruction.getLabel());
