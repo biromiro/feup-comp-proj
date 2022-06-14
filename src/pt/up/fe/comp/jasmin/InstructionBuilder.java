@@ -152,7 +152,7 @@ public class InstructionBuilder {
     }
 
     private String newObject(String className) {
-        return JasminInstruction.new_(className) + "dup\n";
+        return JasminInstruction.new_(getFullyQualifiedName(className)) + "dup\n";
     }
 
     private String newArray(String load) {
