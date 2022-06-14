@@ -142,41 +142,27 @@ public class InstructionBuilder {
         return JasminInstruction.new_(getFullyQualifiedName(className)) + JasminInstruction.dup();
     }
 
-    private String invokestatic(CallInstruction instruction) {
+    private String invoke(CallInstruction instruction) {
         StringBuilder code = new StringBuilder();
+
+        CallType callType = instruction.getInvocationType();
+
+        if (callType != CallType.invokestatic) {
+            code.append(load(instruction.getFirstArg()));
+        }
         ArrayList<Element> parameters = instruction.getListOfOperands();
         code.append(loadParameters(parameters));
-        code.append("invokestatic ");
 
-        String methodClass = getFullyQualifiedName(((Operand) instruction.getFirstArg()).getName());
+        String className;
+        if (instruction.getInvocationType() != CallType.invokestatic) {
+            className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
+        } else {
+            className = getFullyQualifiedName(((Operand) instruction.getFirstArg()).getName());
+        }
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
         Type returnType = instruction.getReturnType();
 
-        code.append(methodClass).append("/")
-                .append(methodName)
-                .append(argumentTypes(parameters))
-                .append(getJasminType(returnType))
-                .append("\n");
-
-        return code.toString();
-    }
-
-    private String invokenonstatic(CallInstruction instruction) {
-        StringBuilder code = new StringBuilder();
-        ArrayList<Element> parameters = instruction.getListOfOperands();
-        code.append(load(instruction.getFirstArg()));
-        code.append(loadParameters(parameters));
-
-        String className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
-        String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        Type returnType = instruction.getReturnType();
-
-        code.append(instruction.getInvocationType().toString()).append(" ")
-                .append(className).append("/")
-                .append(methodName)
-                .append(argumentTypes(parameters))
-                .append(getJasminType(returnType))
-                .append("\n");
+        code.append(JasminInstruction.invoke(callType, className, methodName, argumentTypes(parameters), parameters.size(), getJasminType(returnType)));
 
         return code.toString();
     }
@@ -194,8 +180,7 @@ public class InstructionBuilder {
         return switch (instruction.getInvocationType()) {
             case arraylength -> arraylength(instruction);
             case NEW -> newCall(instruction);
-            case invokestatic -> invokestatic(instruction);
-            case invokespecial, invokevirtual -> invokenonstatic(instruction);
+            case invokestatic, invokevirtual, invokespecial -> invoke(instruction);
             default -> throw new NotImplementedException(instruction.getInvocationType());
         };
     }

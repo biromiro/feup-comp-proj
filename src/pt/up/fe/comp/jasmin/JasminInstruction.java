@@ -1,5 +1,6 @@
 package pt.up.fe.comp.jasmin;
 
+import org.specs.comp.ollir.CallType;
 import org.specs.comp.ollir.OperationType;
 
 public class JasminInstruction {
@@ -105,6 +106,19 @@ public class JasminInstruction {
                 " " + className +
                 "/" + fieldName +
                 " " + fieldType +
+                "\n";
+    }
+
+    public static String invoke(CallType callType, String className, String methodName, String argumentsTypes, int argCount, String returnType) {
+        stackLimit.updateStack(-argCount);
+        if (callType != CallType.invokestatic)
+            stackLimit.updateStack(-1);
+
+        return callType.toString() + " " +
+                className + "/" +
+                methodName +
+                argumentsTypes +
+                returnType +
                 "\n";
     }
 
