@@ -87,7 +87,7 @@ public class CustomTestsOptimizations {
         eliminationOfUnnecessaryGotosHelper(filename, maxIf, 0, expected);
     }
 
-    public void deadCodeHelper(String filename, String word, String expected) {
+    public void deadCodeHelper(String filename, List<String> words, String expected) {
         JasminResult original = getJasminResult(filename);
         JasminResult optimized = getJasminResultOpt(filename);
 
@@ -99,9 +99,15 @@ public class CustomTestsOptimizations {
                 original.getJasminCode(), optimized.getJasminCode(),
                 optimized);
 
-        var wordOccurOpt = CpUtils.countOccurences(optimized, word);
+        for (var word : words) {
+            var wordOccurOpt = CpUtils.countOccurences(optimized, word);
+            CpUtils.assertEquals("Expected exactly 0 " + word, 0, wordOccurOpt, optimized);
+        }
 
-        CpUtils.assertEquals("Expected exactly 0 " + word, 0, wordOccurOpt, optimized);
+    }
+
+    public void deadCodeHelper(String filename, String word, String expected) {
+        deadCodeHelper(filename, List.of(word), expected);
     }
 
     @Test
@@ -177,6 +183,20 @@ public class CustomTestsOptimizations {
     public void deadCode6() {
         deadCodeHelper("DeadCode6", "777501", getResults(Arrays.asList(
                 777502, 777503
+        )));
+    }
+
+    @Test
+    public void deadCode7() {
+        deadCodeHelper("DeadCode7", Arrays.asList("777502", "777503"), getResults(Arrays.asList(
+                777501, 777504
+        )));
+    }
+
+    @Test
+    public void deadCode8() {
+        deadCodeHelper("DeadCode8", Arrays.asList("777501", "777503"), getResults(Arrays.asList(
+                777502, 777504
         )));
     }
 }
