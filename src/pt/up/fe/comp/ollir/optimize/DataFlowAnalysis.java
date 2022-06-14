@@ -35,9 +35,7 @@ public class DataFlowAnalysis {
             methodFlow.buildInterferenceGraph();
             var num = ollirResult.getConfig().get("registerAllocation");
 
-            methodFlow.colorInterferenceGraph(
-                    Integer.parseInt(num)
-            );
+            methodFlow.colorInterferenceGraph(Integer.parseInt(num));
         }
     }
 
