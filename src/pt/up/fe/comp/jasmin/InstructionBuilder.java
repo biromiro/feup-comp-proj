@@ -260,7 +260,7 @@ public class InstructionBuilder {
         Element classElement = instruction.getFirstOperand();
         Element fieldElement = instruction.getSecondOperand();
         Element valueElement = instruction.getThirdOperand();
-        code.append(load(fieldElement));
+        code.append(load(classElement));
         code.append(load(valueElement));
         code.append(fieldOp(classElement, fieldElement, InstructionType.PUTFIELD));
         return code.toString();

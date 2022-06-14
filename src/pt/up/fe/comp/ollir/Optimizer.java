@@ -69,4 +69,5 @@ public class Optimizer implements JmmOptimization {
 
         return ollirResult;
     }
+
 }
