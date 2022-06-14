@@ -50,11 +50,11 @@ public class InstructionBuilder {
     }
 
     private String loadArray(Element element) {
-        return getArray(element) + "iaload\n";
+        return getArray(element) + JasminInstruction.iaload();
     }
 
     private String storeArray(Element element, String rhs) {
-        return getArray(element) + rhs + "iastore\n";
+        return getArray(element) + rhs + JasminInstruction.iastore();
     }
 
     private String loadParameters(ArrayList<Element> parameters) {
@@ -108,34 +108,22 @@ public class InstructionBuilder {
 
     private String store(Element lhs, String rhs) {
         ElementType type = lhs.getType().getTypeOfElement();
-        int register = registerNum(lhs);
 
         if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
             ElementType variableType = lookup(lhs).getVarType().getTypeOfElement();
             if (variableType == ElementType.ARRAYREF) {
                 return storeArray(lhs, rhs);
             }
-            return rhs + JasminInstruction.istore(register);
+            return rhs + JasminInstruction.istore(registerNum(lhs));
         } else if (type == ElementType.OBJECTREF || type == ElementType.THIS || type == ElementType.ARRAYREF) {
-            return rhs + JasminInstruction.astore(register);
+            return rhs + JasminInstruction.astore(registerNum(lhs));
         }
 
         return "";
     }
 
-    private String arithmetic(OperationType type) {
-        return switch (type) {
-            case ADD -> "iadd\n";
-            case SUB -> "isub\n";
-            case MUL, ANDB -> "imul\n";
-            case DIV -> "idiv\n";
-            case OR -> "ior\n";
-            default -> "";
-        };
-    }
-
     private String arraylength(CallInstruction instruction) {
-        return load(instruction.getFirstArg()) + "arraylength\n";
+        return load(instruction.getFirstArg()) + JasminInstruction.arraylength();
     }
 
     private String newCall(CallInstruction instruction) {
@@ -145,18 +133,14 @@ public class InstructionBuilder {
             String returnType = ((ClassType) instruction.getReturnType()).getName();
             code.append(newObject(returnType));
         } else {
-            String load = load(instruction.getListOfOperands().get(0));
-            code.append(newArray(load));
+            code.append(load(instruction.getListOfOperands().get(0)));
+            code.append(JasminInstruction.newarray());
         }
         return code.toString();
     }
 
     private String newObject(String className) {
-        return JasminInstruction.new_(getFullyQualifiedName(className)) + "dup\n";
-    }
-
-    private String newArray(String load) {
-        return load + "newarray int\n";
+        return JasminInstruction.new_(getFullyQualifiedName(className)) + JasminInstruction.dup();
     }
 
     private String invokestatic(CallInstruction instruction) {
@@ -208,20 +192,13 @@ public class InstructionBuilder {
     }
 
     private String build(CallInstruction instruction) {
-        StringBuilder code = new StringBuilder();
-        code.append(
-                switch (instruction.getInvocationType()) {
-                    case arraylength -> arraylength(instruction);
-                    case NEW -> newCall(instruction);
-                    case invokestatic -> invokestatic(instruction);
-                    case invokespecial, invokevirtual -> invokenonstatic(instruction);
-                    default -> throw new NotImplementedException(instruction.getInvocationType());
-                });
-        ElementType returnType = instruction.getReturnType().getTypeOfElement();
-        if (returnType != ElementType.VOID || instruction.getInvocationType() == CallType.invokespecial) {
-            code.append("pop\n");
-        }
-        return code.toString();
+        return switch (instruction.getInvocationType()) {
+            case arraylength -> arraylength(instruction);
+            case NEW -> newCall(instruction);
+            case invokestatic -> invokestatic(instruction);
+            case invokespecial, invokevirtual -> invokenonstatic(instruction);
+            default -> throw new NotImplementedException(instruction.getInvocationType());
+        };
     }
 
     private String build(ReturnInstruction instruction) {
@@ -286,7 +263,7 @@ public class InstructionBuilder {
         if (operation.getOpType() == OperationType.NOTB) {
             code.append(JasminInstruction.iconst("1"));
             code.append(load(element));
-            code.append("isub\n");
+            code.append(JasminInstruction.arithmetic(OperationType.SUB));
         }
 
         return code.toString();
@@ -308,7 +285,7 @@ public class InstructionBuilder {
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
-            code.append(arithmetic(type));
+            code.append(JasminInstruction.arithmetic(type));
         }
 
         return code.toString();

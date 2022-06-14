@@ -1,5 +1,7 @@
 package pt.up.fe.comp.jasmin;
 
+import org.specs.comp.ollir.OperationType;
+
 public class JasminInstruction {
     enum FieldInstruction {
         GET,
@@ -14,6 +16,14 @@ public class JasminInstruction {
         return inst + register + "\n";
     }
 
+    public static String pop() {
+        return "pop\n";
+    }
+
+    public static String dup() {
+        return "dup\n";
+    }
+
     public static String aload(int register) {
         return registerInstruction("aload", register);
     }
@@ -22,12 +32,20 @@ public class JasminInstruction {
         return registerInstruction("iload", register);
     }
 
+    public static String iaload() {
+        return "iaload\n";
+    }
+
     public static String astore(int register) {
         return registerInstruction("astore", register);
     }
 
     public static String istore(int register) {
         return registerInstruction("istore", register);
+    }
+
+    public static String iastore() {
+        return "iastore\n";
     }
 
     public static String iconst(String num) {
@@ -51,6 +69,21 @@ public class JasminInstruction {
         return instruction + "\n";
     }
 
+    public static String arithmetic(OperationType type) {
+        return switch (type) {
+            case ADD -> "iadd\n";
+            case SUB -> "isub\n";
+            case MUL, ANDB -> "imul\n";
+            case DIV -> "idiv\n";
+            case OR -> "ior\n";
+            default -> "";
+        };
+    }
+
+    public static String arraylength() {
+        return "arraylength\n";
+    }
+
     public static String field(FieldInstruction type, String className, String fieldName, String fieldType) {
         return type.toString().toLowerCase() + "field" +
                 " " + className +
@@ -61,6 +94,10 @@ public class JasminInstruction {
 
     public static String new_(String className) {
         return "new " + className + '\n';
+    }
+
+    public static String newarray() {
+        return "newarray int\n";
     }
 
     public static String goto_(String label) {
