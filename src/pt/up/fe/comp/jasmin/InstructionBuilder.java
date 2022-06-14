@@ -208,20 +208,13 @@ public class InstructionBuilder {
     }
 
     private String build(CallInstruction instruction) {
-        StringBuilder code = new StringBuilder();
-        code.append(
-                switch (instruction.getInvocationType()) {
-                    case arraylength -> arraylength(instruction);
-                    case NEW -> newCall(instruction);
-                    case invokestatic -> invokestatic(instruction);
-                    case invokespecial, invokevirtual -> invokenonstatic(instruction);
-                    default -> throw new NotImplementedException(instruction.getInvocationType());
-                });
-        ElementType returnType = instruction.getReturnType().getTypeOfElement();
-        if (returnType != ElementType.VOID || instruction.getInvocationType() == CallType.invokespecial) {
-            code.append("pop\n");
-        }
-        return code.toString();
+        return switch (instruction.getInvocationType()) {
+            case arraylength -> arraylength(instruction);
+            case NEW -> newCall(instruction);
+            case invokestatic -> invokestatic(instruction);
+            case invokespecial, invokevirtual -> invokenonstatic(instruction);
+            default -> throw new NotImplementedException(instruction.getInvocationType());
+        };
     }
 
     private String build(ReturnInstruction instruction) {
