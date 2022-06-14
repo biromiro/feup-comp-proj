@@ -297,7 +297,7 @@ public class InstructionBuilder {
         //grammar also accepts && and <
 
         if (type == OperationType.LTH || type == OperationType.ANDB) {
-            code.append(booleanBinary(type, leftLoad, rightLoad));
+            code.append(booleanBinary(type, lhs, rhs));
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
@@ -307,37 +307,42 @@ public class InstructionBuilder {
         return code.toString();
     }
 
-    private String booleanBinary(OperationType type, String leftLoad, String rightLoad) {
+    private String booleanBinary(OperationType type, Element lhs, Element rhs) {
         return switch (type) {
-            case LTH -> lth(leftLoad, rightLoad);
-            case ANDB -> andb(leftLoad, rightLoad);
+            case LTH -> lth(lhs, rhs);
+            case ANDB -> andb(lhs, rhs);
             default -> "";
         };
     }
 
-    private String lth(String leftLoad, String rightLoad) {
+    private String lth(Element lhs, Element rhs) {
         StringBuilder code = new StringBuilder();
-        code.append(leftLoad);
-        code.append(rightLoad);
+        code.append(load(lhs));
+        if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
+            code.append("iflt ");
+        } else {
+            code.append(load(rhs));
+            code.append("if_icmplt ");
+        }
         String label1 = "LTH_" + labelTracker.nextLabelNumber();
         String label2 = "LTH_" + labelTracker.nextLabelNumber();
-        code.append("if_icmplt ").append(label1).append("\n")
+        code.append(label1).append("\n")
                 .append(JasminInstruction.iconst("0")).append("goto ")
                 .append(label2).append("\n").append(label1).append(":\n")
                 .append(JasminInstruction.iconst("1")).append(label2).append(":\n");
         return code.toString();
     }
 
-    private String andb(String leftLoad, String rightLoad) {
+    private String andb(Element lhs, Element rhs) {
         StringBuilder code = new StringBuilder();
         String label1 = "ANDB_" + labelTracker.nextLabelNumber();
         String label2 = "ANDB_" + labelTracker.nextLabelNumber();
 
         // if any side is 0, then result is false
-        code.append(leftLoad);
+        code.append(load(lhs));
         code.append("ifeq ").append(label1).append("\n");
 
-        code.append(rightLoad);
+        code.append(load(rhs));
         code.append("ifeq ").append(label1).append("\n");
 
         // result is 1
