@@ -1,0 +1,15 @@
+import ioPlus;
+class Obj {
+    public int[] getArray(int a) {
+        int[] arr;
+        arr = new int[a];
+        arr[0] = a * 2;
+        return arr;
+    }
+
+    public static void main(String[] args) {
+        ioPlus.printResult(
+            new Obj().getArray(new Obj().getArray(new Obj().getArray(1)[0])[0]).length
+        );
+    }
+}

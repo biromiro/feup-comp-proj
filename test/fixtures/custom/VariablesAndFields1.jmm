@@ -1,0 +1,48 @@
+import ioPlus;
+class HelloWorld {
+    int fora;
+    int dentrofora;
+    int parametrofora;
+
+    public int teste(int parametro, int parametrofora) {
+        int dentro;
+        int dentrofora;
+        int esquerdo;
+
+        fora = 100;
+        dentro = 101;
+        parametro = 102;
+        dentrofora = 103;
+        parametrofora = 104;
+
+        esquerdo = fora;
+        ioPlus.printResult(esquerdo);
+        esquerdo = dentro;
+        ioPlus.printResult(esquerdo);
+        esquerdo = parametro;
+        ioPlus.printResult(esquerdo);
+        esquerdo = dentrofora;
+        ioPlus.printResult(esquerdo);
+        esquerdo = parametrofora;
+        ioPlus.printResult(esquerdo);
+
+        return 0;
+    }
+
+    public int run() {
+        fora = 1;
+        dentrofora = 2;
+        parametrofora = 3;
+
+        this.teste(4, 5);
+
+        ioPlus.printResult(fora);
+        ioPlus.printResult(dentrofora);
+        ioPlus.printResult(parametrofora);
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        new HelloWorld().run();
+    }
+}

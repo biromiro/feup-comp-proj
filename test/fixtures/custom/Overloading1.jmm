@@ -53,8 +53,7 @@ class Overloading {
 	    a = o.func(1);
 	    ioPlus.printResult(a);
 
-	    a = o.func(a);
-	    ioPlus.printResult(a);
+	    ioPlus.printResult(o.func(a));
 
 	    a = o.func(o.func(a));
 	    ioPlus.printResult(a);

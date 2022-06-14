@@ -25,27 +25,8 @@ public class OptimizeTest {
     }
 
     @Test
-    public void testFac() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Fac.jmm"));
-        TestUtils.noErrors(result);
-    }
-
-    @Test
     public void testLazySort() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result);
     }
-
-    @Test
-    public void testIfElseBasic() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/IfElseStatementBasic.jmm"));
-        TestUtils.noErrors(result);
-    }
-
-    @Test
-    public void testWhileBasic() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/WhileBasic.jmm"));
-        TestUtils.noErrors(result);
-    }
-
 }

@@ -1,0 +1,19 @@
+import ioPlus;
+
+class HelloWorld {
+
+    public static void main(String[] args) {
+        int i;
+        int j;
+
+        i = 0;
+        while (i < 5) {
+            j = 0;
+            while (j < i) {
+                 ioPlus.printResult(j);
+                 j = j + 1;
+            }
+            i = i + 1;
+        }
+    }
+}

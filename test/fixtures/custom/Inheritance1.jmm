@@ -1,0 +1,32 @@
+import inheritanceAB.A;
+import inheritanceAB.B;
+import ioPlus;
+
+class HelloWorld {
+    public int f2() {
+        int result;
+        A a;
+        a = new B();
+
+        result = a.a();
+        return result;
+    }
+
+    public A f3aux() {
+        B b;
+        b = new B();
+        return b;
+    }
+    public int f3() {
+        int result;
+        result = this.f3aux().a();
+        return result;
+    }
+
+    public static void main(String[] args) {
+        HelloWorld hw;
+        hw = new HelloWorld();
+        ioPlus.printResult(hw.f2());
+        ioPlus.printResult(hw.f3());
+    }
+}

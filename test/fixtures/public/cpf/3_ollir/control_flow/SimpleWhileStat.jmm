@@ -6,8 +6,7 @@ class SimpleWhileStat {
         int c;
         int i;
         i = 0;
-        c = 3;
-		
+
         while (i < a) {
             i = i + 1;
         }

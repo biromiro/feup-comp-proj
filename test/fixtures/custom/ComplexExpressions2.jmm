@@ -1,0 +1,27 @@
+import ioPlus;
+class ComplexExpressions {
+    public int func() {
+        return 5;
+    }
+
+    public int toInt(boolean b) {
+        int i;
+        if (b) {
+            i = 1;
+        } else {
+            i = 0;
+        }
+        return i;
+    }
+
+	public static void main(String[] args) {
+	    ComplexExpressions c;
+	    int a;
+	    c = new ComplexExpressions();
+	    a = c.func() + 1;
+        ioPlus.printResult(a);
+
+        a = c.toInt(c.func() < 1);
+        ioPlus.printResult(a);
+	}
+}

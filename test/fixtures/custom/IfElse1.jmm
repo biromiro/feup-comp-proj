@@ -1,0 +1,79 @@
+import ioPlus;
+
+class HelloWorld {
+    public static void main(String[] args) {
+        if (true) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (false) {
+           ioPlus.printResult(1);
+        } else {
+           ioPlus.printResult(0);
+        }
+
+        if (5 < 10) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (10 < 5) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (5 < 4) {
+            ioPlus.printResult(0);
+        } else if (4 < 3) {
+            ioPlus.printResult(1);
+        } else if (2+2 < 2+3) {
+            ioPlus.printResult(2);
+        } else if (true) {
+            ioPlus.printResult(3);
+        } else {
+            ioPlus.printResult(4);
+        }
+
+        if (true)
+            ioPlus.printResult(0);
+        else
+            ioPlus.printResult(1);
+            ioPlus.printResult(2);
+
+        if (5 < 4) {
+            ioPlus.printResult(0);
+        } else if (4 < 3) {
+            ioPlus.printResult(1);
+        } else if (2+2 < 2+3) {
+            if (5 < 4) {
+                ioPlus.printResult(10);
+            } else if (4 < 3) {
+                ioPlus.printResult(11);
+            } else if (2+2 < 2+3) {
+                ioPlus.printResult(12);
+            } else {
+                ioPlus.printResult(13);
+            }
+        } else {
+            ioPlus.printResult(3);
+        }
+
+        if (false) {
+            if (true) {
+                ioPlus.printResult(1);
+            } else {
+                ioPlus.printResult(0);
+            }
+        } else {
+            if (true) {
+                ioPlus.printResult(2);
+            } else {
+                ioPlus.printResult(3);
+            }
+        }
+    }
+}

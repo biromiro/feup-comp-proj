@@ -1,0 +1,53 @@
+import ioPlus;
+class Recursion {
+
+    public boolean odd(int n) {
+        boolean result;
+        if (n < 1) { // only consider positives
+            result = false;
+        } else {
+            if (n < 2) {
+                result = true;
+            } else {
+                result = this.even(n - 1);
+            }
+        }
+        return result;
+    }
+
+    public boolean even(int n) {
+        boolean result;
+        if (n < 2) { // only consider positives
+            result = false;
+        } else {
+            if (n < 3) {
+                result = true;
+            } else {
+                result = this.odd(n - 1);
+            }
+        }
+
+        return result;
+    }
+
+    public int boolToInt(boolean b) {
+        int result;
+        if (b) {
+            result = 1;
+        } else {
+            result = 0;
+        }
+        return result;
+    }
+
+	public static void main(String[] args) {
+	    Recursion r;
+
+	    r = new Recursion();
+
+	    ioPlus.printResult(r.boolToInt(r.even(5)));
+	    ioPlus.printResult(r.boolToInt(r.odd(5)));
+	    ioPlus.printResult(r.boolToInt(r.even(6)));
+	    ioPlus.printResult(r.boolToInt(r.odd(6)));
+	}
+}

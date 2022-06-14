@@ -1,0 +1,49 @@
+import ioPlus;
+
+class HelloWorld {
+    public boolean getResult() {
+        return 4 < (2+2);
+    }
+
+    public boolean getResult2() {
+        return !false;
+    }
+
+    public static void main(String[] args) {
+        if (new HelloWorld().getResult()) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (!new HelloWorld().getResult()) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (!new HelloWorld().getResult() && new int[5].length < 10) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (new HelloWorld().getResult2()) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (!new HelloWorld().getResult2()) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+
+        if (!new HelloWorld().getResult2() && new int[5].length < 10) {
+            ioPlus.printResult(1);
+        } else {
+            ioPlus.printResult(0);
+        }
+    }
+}

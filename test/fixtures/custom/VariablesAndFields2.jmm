@@ -1,0 +1,37 @@
+import ioPlus;
+
+class MyClass {
+    int a;
+
+    public int get() {
+        return a;
+    }
+
+    public int put(int n){
+        a = n;
+        return 0;
+    }
+
+    public int m1(){
+        MyClass c1;
+        int a;
+
+        c1 = new MyClass();
+
+        a = 2;
+        this.put(0-2);
+        ioPlus.printResult(a);
+
+        c1.put(2);
+        ioPlus.printResult(c1.get());
+        ioPlus.printResult(this.get());
+
+        return 0;
+    }
+
+    public static void main(String[] args){
+        MyClass A;
+        A = new MyClass();
+        A.m1();
+    }
+}
