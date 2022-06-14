@@ -1,0 +1,64 @@
+import ioPlus;
+class HelloWorld {
+    int a;
+
+    public int calcaux(int x) { return x+1; }
+    public int calc(int[] abc, boolean calc) {
+        int[] d;
+        HelloWorld hw;
+        int a;
+        boolean what;
+
+        d = new int[abc.length + 2];
+        hw = new HelloWorld();
+        abc[0] = hw.calcaux(abc[5 - 4]);
+        abc[1] = 2;
+        a = abc[1];
+        what = !calc && true;
+        ioPlus.printResult(this.boolToInt(what));
+        what = a < abc[0];
+        ioPlus.printResult(this.boolToInt(what));
+        return d.length;
+    }
+
+    public int boolToInt(boolean b) {
+        int result;
+        if (b) {
+            result = 1;
+        } else {
+            result = 0;
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        int a;
+        int b;
+        int c;
+        int[] julia;
+        HelloWorld hello;
+        hello =  new HelloWorld();
+        a = 10*3-4+1;
+        ioPlus.printResult(a);
+        b = a + 3 * 2;
+        ioPlus.printResult(b);
+        c = a + b * 2 + 1;
+        ioPlus.printResult(c);
+        c = c / 2 + 3 * ( 2 + 1 * 3);
+        ioPlus.printResult(c);
+
+        julia = new int[3];
+        julia[0] = 10;
+        julia[1] = 11;
+        julia[2] = 12;
+
+        ioPlus.printResult(hello.calc(julia, true));
+        ioPlus.printResult(julia[0]);
+        ioPlus.printResult(julia[1]);
+        ioPlus.printResult(julia[2]);
+        ioPlus.printResult(hello.calc(julia, false));
+        ioPlus.printResult(julia[0]);
+        ioPlus.printResult(julia[1]);
+        ioPlus.printResult(julia[2]);
+    }
+}

@@ -1,0 +1,38 @@
+import ioPlus;
+class Overloading {
+
+    public int func() {
+        return this.func(5);
+    }
+
+    public int func(int a) {
+        return this.func(a, true);
+    }
+
+    public int func(int a, boolean b) {
+        return this.func(a, b, b, 2*a, 0-a);
+    }
+
+    public int func(int a, boolean b, boolean b2, int c, int d) {
+        ioPlus.printResult(a + 20*c - 300*d + 4000);
+        return this.func(b && a + 20*c - 300*d + 4000 < 2*a && b2);
+    }
+
+    public int func(boolean b) {
+        int c;
+        if (b) {
+            c = 57;
+        } else {
+            c = 0-57;
+        }
+        return c;
+    }
+
+	public static void main(String[] args) {
+	    Overloading o;
+
+	    o = new Overloading();
+
+	    ioPlus.printResult(o.func());
+	}
+}
