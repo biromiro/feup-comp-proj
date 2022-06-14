@@ -365,9 +365,17 @@ public class InstructionBuilder {
 
     private String build(CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
-        Element condition = ((SingleOpCondInstruction) instruction).getCondition().getSingleOperand();
-        code.append(load(condition));
-        code.append(JasminInstruction.ifne(instruction.getLabel()));
+        if (instruction.getOperands().size() == 1) {
+            Element condition = instruction.getOperands().get(0);
+            code.append(load(condition));
+            code.append(JasminInstruction.ifne(instruction.getLabel()));
+        } else {
+            Element leftOperand = instruction.getOperands().get(0);
+            Element rightOperand = instruction.getOperands().get(1);
+            code.append(load(leftOperand));
+            code.append(load(rightOperand));
+            code.append(JasminInstruction.if_icmplt(instruction.getLabel()));
+        }
         code.append("\n");
         return code.toString();
     }

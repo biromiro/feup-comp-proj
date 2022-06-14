@@ -70,4 +70,8 @@ public class JasminInstruction {
     public static String ifne(String label) {
         return "ifne " + label + '\n';
     }
+
+    public static String if_icmplt(String label) {
+        return "if_icmplt " + label + '\n';
+    }
 }
