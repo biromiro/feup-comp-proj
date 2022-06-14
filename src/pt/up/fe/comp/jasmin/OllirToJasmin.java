@@ -143,8 +143,8 @@ public class OllirToJasmin {
         }
 
         // Stack and locals limits
-        code.append(".limit stack ").append(JasminInstruction.stackLimit.size()).append('\n');
-        code.append(".limit locals 99\n");
+        code.append(".limit stack ").append(JasminInstruction.stackLimit.size()).append("\n");
+        code.append(".limit locals ").append(method.getVarTable().size() + 1).append("\n");
         code.append(body);
 
         code.append(".end method\n");
