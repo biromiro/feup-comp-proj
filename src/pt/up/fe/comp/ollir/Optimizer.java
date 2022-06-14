@@ -43,7 +43,8 @@ public class Optimizer implements JmmOptimization {
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
-        if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
+        // TODO default value should be false
+        if (ollirResult.getConfig().getOrDefault("debug", "true").equals("true")) {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
