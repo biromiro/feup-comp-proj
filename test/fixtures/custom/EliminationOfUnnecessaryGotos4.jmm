@@ -1,0 +1,18 @@
+import ioPlus;
+
+class EliminationOfUnnecessaryGotos {
+
+    public int loop(int n) {
+        int i;
+        i = 0;
+        while (i < n) {
+            i = i + 1;
+        }
+        return i;
+    }
+
+    public static void main(String[] args) {
+         ioPlus.printResult(new EliminationOfUnnecessaryGotos().loop(0));
+         ioPlus.printResult(new EliminationOfUnnecessaryGotos().loop(1));
+    }
+}
