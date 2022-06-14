@@ -80,26 +80,6 @@ public class CustomTests {
     }
 
     @Test
-    public void illegalAssign1() {
-        TestUtils.mustFail(getSemanticsResult("illegalAssign1.fail").getReports());
-    }
-
-    @Test
-    public void illegalAssign2() {
-        TestUtils.mustFail(getSemanticsResult("illegalAssign2.fail").getReports());
-    }
-
-    @Test
-    public void illegalAssign3() {
-        TestUtils.mustFail(getSemanticsResult("illegalAssign3.fail").getReports());
-    }
-
-    @Test
-    public void illegalAssign4() {
-        TestUtils.mustFail(getSemanticsResult("illegalAssign4.fail").getReports());
-    }
-
-    @Test
     public void variablesAndFields1() {
         CpUtils.runJasmin(getJasminResult("VariablesAndFields1"), getResults(Arrays.asList(
                 100, 101, 102, 103, 104, 100, 2, 3
