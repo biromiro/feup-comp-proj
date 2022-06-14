@@ -201,7 +201,7 @@ public class MethodDataFlowAnalysis {
         }
     }
 
-    public void colorInterferenceGraph(int MAX_K) {
+    public void colorInterferenceGraph(int maxK) {
         Stack<RegisterNode> stack = new Stack<>();
         int k = 0;
         while (interferenceGraph.getVisibleNodesCount() > 0) {
@@ -217,7 +217,7 @@ public class MethodDataFlowAnalysis {
             }
         }
 
-        if (MAX_K > 0 && k > MAX_K) {
+        if (maxK > 0 && k > maxK) {
             ollirResult.getReports().add(
                     new Report(
                             ReportType.ERROR,
@@ -226,7 +226,7 @@ public class MethodDataFlowAnalysis {
                             "Not enough registers. At least " + k + " registers are needed.")
             );
             throw new RuntimeException("Not enough registers." +
-                    " At least " + k + " registers are needed but " + MAX_K + " were requested.");
+                    " At least " + k + " registers are needed but " + maxK + " were requested.");
 
         }
 

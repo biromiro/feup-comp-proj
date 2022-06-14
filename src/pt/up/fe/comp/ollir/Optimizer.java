@@ -12,21 +12,15 @@ import java.util.HashMap;
 public class Optimizer implements JmmOptimization {
     @Override
     public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
-
-        String optimize = semanticsResult.getConfig().get("optimize");
-        if (optimize == null || optimize.equals("false")) {
+        if (semanticsResult.getConfig().getOrDefault("optimize", "false").equals("false")) {
             return semanticsResult;
         }
 
-        ConstantPropagationVisitor constantPropagationVisitor = null;
-
-        while (constantPropagationVisitor == null ||
-                constantPropagationVisitor.hasChanged()) {
+        ConstantPropagationVisitor constantPropagationVisitor;
+        do {
             constantPropagationVisitor = new ConstantPropagationVisitor();
             constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
-        }
-
-        System.out.println("After constant propagation:\n" +semanticsResult.getRootNode().toTree() + "\n\n");
+        } while (constantPropagationVisitor.hasChanged());
 
         return semanticsResult;
     }
@@ -46,20 +40,24 @@ public class Optimizer implements JmmOptimization {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
-        String optimize = ollirResult.getConfig().get("optimize");
-        String registerAllocation = ollirResult.getConfig().get("registerAllocation");
-
-        boolean optimizeFlag = optimize != null && optimize.equals("true");
-        boolean registerAllocationFlag = registerAllocation != null && registerAllocation.equals("true");
 
         DataFlowAnalysis dataFlowAnalysis = new DataFlowAnalysis(ollirResult);
+
+        boolean optimizeFlag = ollirResult
+                .getConfig()
+                .getOrDefault("optimize", "false")
+                .equals("true");
 
         if (optimizeFlag) {
             do {
                 dataFlowAnalysis.calcInOut();
             } while (dataFlowAnalysis.eliminateDeadVars());
-
         }
+
+        boolean registerAllocationFlag = !ollirResult
+                .getConfig()
+                .getOrDefault("registerAllocation", "-1")
+                .equals("-1");
 
         if (registerAllocationFlag) {
             dataFlowAnalysis.calcInOut();
@@ -69,5 +67,4 @@ public class Optimizer implements JmmOptimization {
 
         return ollirResult;
     }
-
 }
