@@ -13,8 +13,13 @@ import java.util.Set;
 
 public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmNode>, String> {
     private boolean hasChanged = false;
+    private boolean simplifyWhile;
+    public ConstantPropagationVisitor() {
+        this(false);
+    }
+    public ConstantPropagationVisitor(boolean simplifyWhile){
+        this.simplifyWhile = simplifyWhile;
 
-    public ConstantPropagationVisitor(){
         addVisit("MethodBody", this::methodBodyVisit);
         addVisit("Identifier", this::identifierVisit);
         addVisit("Assignment", this::assignmentVisit);
@@ -45,7 +50,8 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
 
     private String methodBodyVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         HashMap<String, JmmNode> newConstantsMap = new HashMap<>(constantsMap);
-        for (JmmNode child : jmmNode.getChildren()) {
+        for (int i=0; i<jmmNode.getChildren().size(); i++) {
+            JmmNode child = jmmNode.getJmmChild(i);
             visit(child, newConstantsMap);
         }
         fixScopedConstantsMap(constantsMap, newConstantsMap);
@@ -53,7 +59,8 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     }
 
     private String defaultVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
-        for(JmmNode child: jmmNode.getChildren()) {
+        for (int i=0; i<jmmNode.getChildren().size(); i++) {
+            JmmNode child = jmmNode.getJmmChild(i);
             visit(child, constantsMap);
         }
         return "";
@@ -78,24 +85,22 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     private String binaryOpVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         JmmNode left = jmmNode.getJmmChild(0);
         JmmNode right = jmmNode.getJmmChild(1);
-        visit(left, constantsMap);
-        visit(right, constantsMap);
-
+        String ret = visit(left, constantsMap);
+        ret = ret.equals("") ? visit(right, constantsMap) : ret;
         ConstantFolder folder = new ConstantFolder();
 
         if (left.getKind().equals("IntegerLiteral") && right.getKind().equals("IntegerLiteral")) {
             folder.foldBinOpInt(left, right, jmmNode);
             hasChanged = true;
+            return "changed";
         }
         else if (left.getKind().equals("BooleanLiteral") && right.getKind().equals("BooleanLiteral")) {
             folder.foldBinOpBool(left, right, jmmNode);
             hasChanged = true;
-        } else {
-            visit(left, constantsMap);
-            visit(right, constantsMap);
+            return "changed";
         }
 
-        return "";
+        return ret;
     }
 
     private String identifierVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
@@ -107,6 +112,7 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
             newLiteral.put("isArray", constant.get("isArray"));
             ConstantFolder.replaceNode(jmmNode, newLiteral);
             hasChanged = true;
+            return "changed";
         }
         return "";
     }
@@ -118,6 +124,7 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         if (expression.getKind().equals("BooleanLiteral")) {
             folder.foldNotExpr(expression, jmmNode);
             hasChanged = true;
+            return "changed";
         }
         return "";
     }
@@ -153,23 +160,61 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         return "";
     }
 
+    private JmmNode copyNode(JmmNode jmmNode, JmmNode parent) {
+        JmmNode copy = new JmmNodeImpl(jmmNode.getKind());
+
+        for (String attr: jmmNode.getAttributes()) {
+            copy.put(attr, jmmNode.get(attr));
+        }
+
+        for (int i=0; i < jmmNode.getChildren().size(); i++) {
+            JmmNode child = jmmNode.getJmmChild(i);
+            JmmNode copyChild = copyNode(child, copy);
+            copy.add(copyChild, i);
+            child.setParent(copy);
+        }
+        copy.setParent(parent);
+
+        return copy;
+    }
+
+    private JmmNode getSimplifiedCondition(JmmNode whileStatement, HashMap<String, JmmNode> constantsMap) {
+        JmmNode whileCopy = copyNode(whileStatement, whileStatement.getJmmParent());
+        JmmNode condition = whileCopy.getJmmChild(0);
+        String change;
+
+        do {
+            change = visit(condition, constantsMap);
+            whileCopy = copyNode(whileCopy, whileStatement.getJmmParent());
+            condition = whileCopy.getJmmChild(0);
+        } while (change.equals("changed") && !condition.getKind().equals("BooleanLiteral"));
+        return condition;
+    }
+
     private String whileStatementVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         JmmNode condition = jmmNode.getJmmChild(0);
         JmmNode body = jmmNode.getJmmChild(1);
-
-        visit(condition, constantsMap);
-
-        ConstantFolder folder = new ConstantFolder();
-
-        if (condition.getKind().equals("BooleanLiteral")) {
-            if (condition.get("val").equals("0")) {
-                folder.foldConstantWhile(jmmNode);
-            }
-            return "";
-        }
-
         HashMap<String, JmmNode> newConstantsMap = new HashMap<>();
+        HashMap<String, JmmNode> constantsMapCopy = new HashMap<>(constantsMap);
 
+        if (simplifyWhile) {
+            JmmNode simplifiedCondition = getSimplifiedCondition(jmmNode, constantsMapCopy);
+            ConstantFolder folder = new ConstantFolder();
+
+            if (simplifiedCondition.getKind().equals("BooleanLiteral")) {
+                if (simplifiedCondition.get("val").equals("0")) {
+                    folder.foldConstantWhile(jmmNode);
+                } else {
+                    jmmNode.put("dowhile", "1");
+                }
+                return "";
+            }
+
+            for (int i=0; i < condition.getChildren().size(); i++) {
+                JmmNode child = condition.getJmmChild(i);
+                child.setParent(condition);
+            }
+        }
         visit(body, newConstantsMap);
         fixScopedConstantsMap(constantsMap, newConstantsMap);
 

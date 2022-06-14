@@ -18,7 +18,8 @@ public class Analyser implements JmmAnalysis {
         List<Report> analysisReports = new AnalyseVisitor().visit(parserResult.getRootNode(), symbolTable);
         List<Report> reports = SpecsCollections.concat(symbolTableReports, analysisReports);
 
-        if (parserResult.getConfig().getOrDefault("debug", "false").equals("true")) {
+        // TODO default value should be false
+        if (parserResult.getConfig().getOrDefault("debug", "true").equals("true")) {
             System.out.println("AST:\n");
             System.out.println(parserResult.getRootNode().toTree());
 

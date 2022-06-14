@@ -131,6 +131,7 @@ public class OllirToJasmin {
                     body.append(label).append(":\n");
                 }
             }
+
             body.append(builder.build(instruction));
 
             if (instruction.getInstType() == InstructionType.CALL) {

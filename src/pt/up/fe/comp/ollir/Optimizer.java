@@ -17,10 +17,17 @@ public class Optimizer implements JmmOptimization {
         }
 
         ConstantPropagationVisitor constantPropagationVisitor;
+
         do {
             constantPropagationVisitor = new ConstantPropagationVisitor();
             constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
         } while (constantPropagationVisitor.hasChanged());
+
+        // simplify while
+        constantPropagationVisitor = new ConstantPropagationVisitor(true);
+        constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
+
+        System.out.println(semanticsResult.getRootNode().toTree());
 
         return semanticsResult;
     }
@@ -36,7 +43,8 @@ public class Optimizer implements JmmOptimization {
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
-        if (ollirResult.getConfig().getOrDefault("debug", "false").equals("true")) {
+        // TODO default value should be false
+        if (ollirResult.getConfig().getOrDefault("debug", "true").equals("true")) {
             System.out.println("OLLIR CODE:");
             System.out.println(ollirResult.getOllirCode());
         }
