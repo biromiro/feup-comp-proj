@@ -335,7 +335,7 @@ public class CustomTestsOptimizations {
     @Test
     public void constProp8() {
         constFoldAndPropHelper("ConstProp8.noDiff",
-                "(bipush|sipush|ldc) 50\\s+istore_\\d+",
+                "(bipush|sipush|ldc) 50\\s+istore(_| )\\d+",
                 getResults(Arrays.asList(50, 50, 50, 4)));
     }
 
