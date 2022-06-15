@@ -1,0 +1,10 @@
+import ioPlus;
+
+class EliminationOfUnnecessaryGotos {
+    public static void main(String[] args) {
+        while (false) {
+            ioPlus.printResult(777501);
+        }
+        ioPlus.printResult(777502);
+    }
+}
