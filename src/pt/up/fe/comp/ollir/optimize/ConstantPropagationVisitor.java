@@ -213,8 +213,10 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     private void getScopedConstantsMap(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         if (jmmNode.getKind().equals("Assignment")) {
             JmmNode identifier = jmmNode.getJmmChild(0);
-            String name = identifier.get("name");
-            constantsMap.remove(name);
+            if (identifier.getAttributes().contains("name")) {
+                String name = identifier.get("name");
+                constantsMap.remove(name);
+            }
         }
 
         for (JmmNode jmmNodeChild: jmmNode.getChildren()) {
