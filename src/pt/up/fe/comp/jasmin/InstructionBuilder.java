@@ -237,8 +237,29 @@ public class InstructionBuilder {
         StringBuilder code = new StringBuilder();
         Element lhs = instruction.getDest();
         Instruction rhs = instruction.getRhs();
-        String rhsString = build(rhs);
 
+        if (rhs.getInstType() == InstructionType.BINARYOPER) {
+            BinaryOpInstruction expression = (BinaryOpInstruction) rhs;
+            if (expression.getOperation().getOpType() == OperationType.ADD || expression.getOperation().getOpType() == OperationType.SUB) {
+                String sign = expression.getOperation().getOpType() == OperationType.ADD ? "" : "-";
+                int register =registerNum(lhs);
+                if (!expression.getLeftOperand().isLiteral() && expression.getRightOperand().isLiteral()) {
+                    // a = a + 1
+                    if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
+                        String literal = sign + ((LiteralElement) expression.getRightOperand()).getLiteral();
+                        return JasminInstruction.iinc(register, literal);
+                    }
+                } else if (expression.getLeftOperand().isLiteral() && !expression.getRightOperand().isLiteral()) {
+                    // a = 1 + a
+                    if (((Operand) expression.getRightOperand()).getName().equals(((Operand) lhs).getName())) {
+                        String literal = sign + ((LiteralElement) expression.getLeftOperand()).getLiteral();
+                        return JasminInstruction.iinc(register, literal);
+                    }
+                }
+            }
+
+        }
+        String rhsString = build(rhs);
         //store to lhs
         String val = store(lhs, rhsString);
         code.append(val);
@@ -296,8 +317,8 @@ public class InstructionBuilder {
 
         //grammar also accepts && and <
 
-        if (type == OperationType.LTH || type == OperationType.ANDB) {
-            code.append(booleanBinary(type, lhs, rhs));
+        if (type == OperationType.LTH) {
+            code.append(lth(lhs, rhs));
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
@@ -305,14 +326,6 @@ public class InstructionBuilder {
         }
 
         return code.toString();
-    }
-
-    private String booleanBinary(OperationType type, Element lhs, Element rhs) {
-        return switch (type) {
-            case LTH -> lth(lhs, rhs);
-            case ANDB -> andb(lhs, rhs);
-            default -> "";
-        };
     }
 
     private String lth(Element lhs, Element rhs) {
@@ -332,32 +345,6 @@ public class InstructionBuilder {
                 .append(JasminInstruction.iconst("1")).append(label2).append(":\n");
         return code.toString();
     }
-
-    private String andb(Element lhs, Element rhs) {
-        StringBuilder code = new StringBuilder();
-        String label1 = "ANDB_" + labelTracker.nextLabelNumber();
-        String label2 = "ANDB_" + labelTracker.nextLabelNumber();
-
-        // if any side is 0, then result is false
-        code.append(load(lhs));
-        code.append("ifeq ").append(label1).append("\n");
-
-        code.append(load(rhs));
-        code.append("ifeq ").append(label1).append("\n");
-
-        // result is 1
-        code.append(JasminInstruction.iconst("1"));
-        code.append("goto ").append(label2).append("\n");
-
-        // result is 0
-        code.append(label1).append(":\n");
-        code.append(JasminInstruction.iconst("0"));
-
-        code.append(label2).append(":\n");
-
-        return code.toString();
-    }
-
 
     private String build(GotoInstruction instruction) {
         return JasminInstruction.goto_(instruction.getLabel());

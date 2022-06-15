@@ -63,6 +63,10 @@ public class JasminInstruction {
         return "ifne " + label + '\n';
     }
 
+    public static String iinc(int register, String literal) {
+        return "iinc " + register + " " + literal + "\n";
+    }
+
     public static String ifeq(String label) {
         return "ifeq " + label + '\n';
     }
