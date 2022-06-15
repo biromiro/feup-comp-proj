@@ -65,15 +65,17 @@ public class CustomTestsOptimizations {
         return TestUtils.backend(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"), config);
     }
 
-    public void eliminationOfUnnecessaryGotosHelper(String filename, int maxIf, int maxGoto, String expected) {
+    public void eliminationOfUnnecessaryGotosHelper(String filename, int maxIf, int maxGoto, String expected, boolean optDif) {
         JasminResult original = getJasminResult(filename);
         JasminResult optimized = getJasminResultOpt(filename);
 
         CpUtils.runJasmin(optimized, expected);
 
-        CpUtils.assertNotEquals("Expected code to change with -o flag\n\nOriginal code:\n" + original.getJasminCode(),
-                original.getJasminCode(), optimized.getJasminCode(),
-                optimized);
+        if (optDif) {
+            CpUtils.assertNotEquals("Expected code to change with -o flag\n\nOriginal code:\n" + original.getJasminCode(),
+                    original.getJasminCode(), optimized.getJasminCode(),
+                    optimized);
+        }
 
         var ifOccurOpt = CpUtils.countOccurences(optimized, "if_");
         var gotoOccurOpt = CpUtils.countOccurences(optimized, "goto");
@@ -84,10 +86,14 @@ public class CustomTestsOptimizations {
     }
 
     public void eliminationOfUnnecessaryGotosHelper(String filename, int maxIf, String expected) {
-        eliminationOfUnnecessaryGotosHelper(filename, maxIf, 0, expected);
+        eliminationOfUnnecessaryGotosHelper(filename, maxIf, 0, expected, true);
     }
 
-    public void deadCodeHelper(String filename, String word, String expected) {
+    public void eliminationOfUnnecessaryGotosHelper(String filename, int maxIf, String expected, boolean optDiff) {
+        eliminationOfUnnecessaryGotosHelper(filename, maxIf, 0, expected, optDiff);
+    }
+
+    public void deadCodeHelper(String filename, List<String> words, String expected) {
         JasminResult original = getJasminResult(filename);
         JasminResult optimized = getJasminResultOpt(filename);
 
@@ -99,9 +105,28 @@ public class CustomTestsOptimizations {
                 original.getJasminCode(), optimized.getJasminCode(),
                 optimized);
 
-        var wordOccurOpt = CpUtils.countOccurences(optimized, word);
+        for (var word : words) {
+            var wordOccurOpt = CpUtils.countOccurences(optimized, word);
+            CpUtils.assertEquals("Expected exactly 0 " + word, 0, wordOccurOpt, optimized);
+        }
 
-        CpUtils.assertEquals("Expected exactly 0 " + word, 0, wordOccurOpt, optimized);
+    }
+
+    public void deadCodeHelper(String filename, String word, String expected) {
+        deadCodeHelper(filename, List.of(word), expected);
+    }
+
+    public void constPropHelper(String filename, String codeExpected, String expected) {
+        JasminResult original = getJasminResult(filename);
+        JasminResult optimized = getJasminResultOpt(filename);
+
+        CpUtils.runJasmin(optimized, expected);
+
+        CpUtils.assertNotEquals("Expected code to change with -o flag\n\nOriginal code:\n" + original.getJasminCode(),
+                original.getJasminCode(), optimized.getJasminCode(),
+                optimized);
+
+        CpUtils.matches(optimized, codeExpected);
     }
 
     @Test
@@ -127,7 +152,7 @@ public class CustomTestsOptimizations {
     public void eliminationOfUnnecessaryGotos4() {
         eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos4", 2, getResults(Arrays.asList(
                 0, 1
-        )));
+        )), false);
     }
 
     @Test
@@ -140,6 +165,11 @@ public class CustomTestsOptimizations {
     @Test
     public void eliminationOfUnnecessaryGotos6() {
         eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos6", 0, getResults(List.of()));
+    }
+
+    @Test
+    public void eliminationOfUnnecessaryGotos7() {
+        eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos7", 2, getResults(List.of()));
     }
 
     @Test
@@ -179,4 +209,98 @@ public class CustomTestsOptimizations {
                 777502, 777503
         )));
     }
+
+    @Test
+    public void deadCode7() {
+        deadCodeHelper("DeadCode7", Arrays.asList("777502", "777503"), getResults(Arrays.asList(
+                777501, 777504
+        )));
+    }
+
+    @Test
+    public void deadCode8() {
+        deadCodeHelper("DeadCode8", Arrays.asList("777501", "777503"), getResults(Arrays.asList(
+                777502, 777504
+        )));
+    }
+
+    @Test
+    public void deadCode9() {
+        deadCodeHelper("DeadCode9", Arrays.asList("777501", "777503"), getResults(Arrays.asList(
+                777502, 777504
+        )));
+    }
+
+    @Test
+    public void deadCode10() {
+        deadCodeHelper("DeadCode10", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void deadCode11() {
+        deadCodeHelper("DeadCode11", Arrays.asList("777501", "777503", "777504", "777505"), getResults(Arrays.asList(
+                777502, 777506
+        )));
+    }
+
+    @Test
+    public void unusedVariable1() {
+        deadCodeHelper("UnusedVariable1", "777501", getResults(List.of()));
+    }
+
+    @Test
+    public void unusedVariable2() {
+        deadCodeHelper("UnusedVariable2", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void unusedVariable3() {
+        deadCodeHelper("UnusedVariable3", "777502", getResults(List.of(777501)));
+    }
+
+    @Test
+    public void unusedVariable4() {
+        deadCodeHelper("UnusedVariable3", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void unusedVariable5() {
+        deadCodeHelper("UnusedVariable5", "777502", getResults(List.of(777501)));
+    }
+
+    @Test
+    public void unusedVariable6() {
+        deadCodeHelper("UnusedVariable6", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void unusedVariable7() {
+        deadCodeHelper("UnusedVariable7", "777505", getResults(Arrays.asList(
+                777504, 777506)));
+    }
+
+    @Test
+    public void unusedVariable8() {
+        deadCodeHelper("UnusedVariable8", "777505", getResults(List.of(777506)));
+    }
+
+    @Test
+    public void constProp1() {
+        constPropHelper("ConstProp1", "(bipush|sipush|ldc) 10\\s+invokevirtual ConstProp/foo(I)I", getResults(List.of()));
+    }
+
+    @Test
+    public void constProp2() {
+        constPropHelper("ConstProp2",
+                "(?s)((iconst_5\\s+iload_\\d+)|(iload_\\d+\\s+iconst_5))\\s+if_icmplt\\s+.*((iconst_5\\s+iload_\\d+)|(iload_\\d+\\s+iconst_5))\\s+if_icmplt\\s+.*iconst_5\\s+invokestatic\\s+ioPlus/printResult\\(I\\)V\\s+.*iconst_5\\s+invokestatic\\s+ioPlus/printResult\\(I\\)V",
+                getResults(List.of(5)));
+    }
+
+    @Test
+    public void constProp3() {
+        constPropHelper("ConstProp3", "iconst_5\\s+invokestatic ioPlus/printResult\\(I\\)V\\s+(bipush|sipush|ldc) 6\\s+invokestatic ioPlus/printResult\\(I\\)V", getResults(Arrays.asList(
+                5, 6
+        )));
+    }
 }
+

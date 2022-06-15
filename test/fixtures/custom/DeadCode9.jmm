@@ -2,13 +2,13 @@ import ioPlus;
 
 class DeadCode {
     public static void main(String[] args) {
-        boolean b;
-        b = false;
-        if (b) {
+        if (10<9) {
             ioPlus.printResult(777501);
-        } else {
+        } else if (0<1) {
             ioPlus.printResult(777502);
+        } else {
+            ioPlus.printResult(777503);
         }
-        ioPlus.printResult(777503);
+        ioPlus.printResult(777504);
     }
 }

@@ -1,0 +1,16 @@
+import ioPlus;
+
+class DeadCode {
+    public static void main(String[] args) {
+        int x;
+        int y;
+        x = 777501;
+        y = 777502;
+        if (true) {
+            ioPlus.printResult(x);
+        } else {
+            ioPlus.printResult(y);
+        }
+
+    }
+}

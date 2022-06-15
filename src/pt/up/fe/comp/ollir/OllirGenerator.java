@@ -236,10 +236,10 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
     private String assignmentVisit(JmmNode assignment, Action action) {
 
         JmmNode identifier = assignment.getJmmChild(0);
-        String rhs = visit(assignment.getJmmChild(1), new Action(ActionType.RET_VAL));
 
         if (isClassVariable(identifier)) {
             String lhs = visit(identifier, new Action(ActionType.ASSIGN_TO_FIELD));
+            String rhs = visit(assignment.getJmmChild(1), new Action(ActionType.SAVE_TO_TMP));
             ollirCode.append("putfield(this,")
                     .append(lhs)
                     .append(",")
@@ -247,6 +247,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                     .append(").V;\n");
         } else {
             String lhs = visit(identifier, action);
+            String rhs = visit(assignment.getJmmChild(1), new Action(ActionType.RET_VAL));
             ollirCode.append(lhs)
                     .append(" :=.")
                     .append(OllirUtils.getCode(AnalysisUtils.getType(identifier)))
@@ -264,6 +265,10 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
         String rhs = visit(jmmNode.getJmmChild(1), new Action(ActionType.SAVE_TO_TMP));
         Type tempType = AnalysisUtils.getType(jmmNode);
         String temp =  getNextTemp(tempType);
+
+        if (action.getAction() == ActionType.RET_VAL) {
+            return lhs + " " + jmmNode.get("op") + "." + OllirUtils.getCode(tempType) + " " + rhs;
+        }
 
         ollirCode.append(temp)
                 .append(" :=.")
@@ -346,10 +351,8 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                 .append(").")
                 .append(OllirUtils.getCode(AnalysisUtils.getType(method)));
 
-        if (action.getAction() == ActionType.RET_VAL) {
-            return call.toString();
-
-        } else if (action.getAction() == ActionType.SAVE_TO_TMP) {
+        // method call needs to be safe to temp
+        if (action.getAction() == ActionType.RET_VAL || action.getAction() == ActionType.SAVE_TO_TMP) {
             Type callType = AnalysisUtils.getType(method);
             String temp =  getNextTemp(callType);
 
@@ -401,7 +404,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
 
     private String newIntArrayVisit(JmmNode jmmNode, Action action) {
 
-        String arrVal = visit(jmmNode.getJmmChild(0), action);
+        String arrVal = visit(jmmNode.getJmmChild(0), new Action(ActionType.SAVE_TO_TMP));
         StringBuilder newIntArray = new StringBuilder();
         Type arrayType = AnalysisUtils.getType(jmmNode);
 
@@ -600,10 +603,16 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
     }
 
     private String notExpressionVisit(JmmNode jmmNode, Action action) {
-        String callee = visit(jmmNode.getJmmChild(0), action);
-        Type callType = AnalysisUtils.getType(jmmNode);
-        String temp =  getNextTemp(callType);
 
+        Type callType = AnalysisUtils.getType(jmmNode);
+
+        if (action.getAction() == ActionType.RET_VAL) {
+            String callee = visit(jmmNode.getJmmChild(0), new Action(ActionType.SAVE_TO_TMP));
+            return "!." + OllirUtils.getCode(callType) + " " + callee;
+        }
+
+        String callee = visit(jmmNode.getJmmChild(0), action);
+        String temp =  getNextTemp(callType);
         ollirCode.append(temp)
                 .append(" :=.")
                 .append(OllirUtils.getCode(callType))
@@ -612,8 +621,6 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                 .append(OllirUtils.getCode(callType))
                 .append(" ")
                 .append(callee)
-                .append(".")
-                .append(OllirUtils.getCode(callType))
                 .append(";\n");
 
         return temp;
@@ -625,7 +632,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
 
     private String ifThenElseStatementVisit(JmmNode jmmNode, Action action) {
 
-        String condition = visit(jmmNode.getJmmChild(0), new Action(ActionType.SAVE_TO_TMP));
+        String condition = visit(jmmNode.getJmmChild(0), new Action(ActionType.RET_VAL));
         String thenLabel = getNextLabel(LabelType.THEN);
         String endifLabel = getNextLabel(LabelType.ENDIF);
 
@@ -672,7 +679,7 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
                     .append(":\n");
 
             visit(bodyNode, action);
-            String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+            String condition = visit(conditionNode, new Action(ActionType.RET_VAL));
             ollirCode.append("if (")
                     .append(condition)
                     .append(") goto ")

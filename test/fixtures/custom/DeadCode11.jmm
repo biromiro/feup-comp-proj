@@ -1,0 +1,24 @@
+import ioPlus;
+
+class DeadCode {
+    public static void main(String[] args) {
+        if (true) {
+            if (true) {
+                if (true) {
+                    if (true && true && 5<10 && 10 < 20 && 2000 < 20001 && 50<50 && 1000<10000) {
+                        ioPlus.printResult(777501);
+                    } else {
+                        ioPlus.printResult(777502);
+                    }
+                } else {
+                    ioPlus.printResult(777503);
+                }
+            } else {
+                ioPlus.printResult(777504);
+            }
+        } else {
+            ioPlus.printResult(777505);
+        }
+        ioPlus.printResult(777506);
+    }
+}

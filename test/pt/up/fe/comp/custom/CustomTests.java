@@ -19,13 +19,9 @@ import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.specs.util.SpecsIo;
-import pt.up.fe.specs.util.SpecsStrings;
-import pt.up.fe.specs.util.utilities.LineStream;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class CustomTests {
 
@@ -174,13 +170,6 @@ public class CustomTests {
     }
 
     @Test
-    public void complexArrayAccess1() {
-        CpUtils.runJasmin(getJasminResult("ComplexArrayAccess1"), getResults(Arrays.asList(
-                1, 2, 3, 4, 5
-        )));
-    }
-
-    @Test
     public void ifElse1() {
         CpUtils.runJasmin(getJasminResult("IfElse1"), getResults(Arrays.asList(
                 1, 0, 1, 0, 2, 0, 2, 12, 2
@@ -217,6 +206,13 @@ public class CustomTests {
     public void while4() {
         CpUtils.runJasmin(getJasminResult("While4"), getResults(Arrays.asList(
                 0, 1, 2, 3, 4, 50, 5, 16, 8, 4, 2
+        )));
+    }
+
+    @Test
+    public void while5() {
+        CpUtils.runJasmin(getJasminResult("While5"), getResults(Arrays.asList(
+                1, 1, 102, 103, 103, 103
         )));
     }
 }

@@ -67,17 +67,13 @@ public class JasminInstruction {
         String instruction = "";
         if (integer == -1) {
             instruction = "iconst_m1";
-        }
-        else if (integer >= 0 && integer <= 5) {
+        } else if (integer >= 0 && integer <= 5) {
             instruction = "iconst_" + num;
-        }
-        else if (integer >= -128 && integer <= 127) {
+        } else if (integer >= -128 && integer <= 127) {
             instruction = "bipush " + num;
-        }
-        else if (integer >= -32768 && integer <= 32767) {
+        } else if (integer >= -32768 && integer <= 32767) {
             instruction = "sipush " + num;
-        }
-        else {
+        } else {
             instruction = "ldc " + num;
         }
         return instruction + "\n";
@@ -140,4 +136,34 @@ public class JasminInstruction {
         limitTracker.updateStack(-1);
         return "ifne " + label + '\n';
     }
+
+    public static String iinc(int register, String literal) {
+        return "iinc " + register + " " + literal + "\n";
+    }
+
+    public static String ifeq(String label) {
+        return "ifeq " + label + '\n';
+    }
+
+    public static String iflt(String label) {
+        return "iflt " + label + '\n';
+    }
+
+    public static String ifge(String label) {
+        return "ifge " + label + '\n';
+    }
+
+    public static String if_icmplt(String label) {
+        return "if_icmplt " + label + '\n';
+    }
+
+    public static String if_icmpge(String label) {
+        return "if_icmpge " + label + '\n';
+    }
+
+    enum FieldInstruction {
+        GET,
+        PUT,
+    }
+
 }

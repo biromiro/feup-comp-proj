@@ -1,0 +1,13 @@
+import ioPlus;
+class ConstProp {
+
+	public static void main(String[] args) {
+	    int a;
+
+        a = 5;
+        ioPlus.printResult(a);
+        a = 6;
+        ioPlus.printResult(a);
+	}
+
+}

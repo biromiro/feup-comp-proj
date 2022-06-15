@@ -205,8 +205,29 @@ public class InstructionBuilder {
         StringBuilder code = new StringBuilder();
         Element lhs = instruction.getDest();
         Instruction rhs = instruction.getRhs();
-        String rhsString = build(rhs);
 
+        if (rhs.getInstType() == InstructionType.BINARYOPER) {
+            BinaryOpInstruction expression = (BinaryOpInstruction) rhs;
+            if (expression.getOperation().getOpType() == OperationType.ADD || expression.getOperation().getOpType() == OperationType.SUB) {
+                String sign = expression.getOperation().getOpType() == OperationType.ADD ? "" : "-";
+                int register =registerNum(lhs);
+                if (!expression.getLeftOperand().isLiteral() && expression.getRightOperand().isLiteral()) {
+                    // a = a + 1
+                    if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
+                        String literal = sign + ((LiteralElement) expression.getRightOperand()).getLiteral();
+                        return JasminInstruction.iinc(register, literal);
+                    }
+                } else if (expression.getLeftOperand().isLiteral() && !expression.getRightOperand().isLiteral()) {
+                    // a = 1 + a
+                    if (((Operand) expression.getRightOperand()).getName().equals(((Operand) lhs).getName())) {
+                        String literal = sign + ((LiteralElement) expression.getLeftOperand()).getLiteral();
+                        return JasminInstruction.iinc(register, literal);
+                    }
+                }
+            }
+
+        }
+        String rhsString = build(rhs);
         //store to lhs
         String val = store(lhs, rhsString);
         code.append(val);
@@ -264,8 +285,8 @@ public class InstructionBuilder {
 
         //grammar also accepts && and <
 
-        if (type == OperationType.LTH || type == OperationType.ANDB) {
-            code.append(booleanBinary(type, lhs, rhs));
+        if (type == OperationType.LTH) {
+            code.append(lth(lhs, rhs));
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
@@ -273,14 +294,6 @@ public class InstructionBuilder {
         }
 
         return code.toString();
-    }
-
-    private String booleanBinary(OperationType type, Element lhs, Element rhs) {
-        return switch (type) {
-            case LTH -> lth(lhs, rhs);
-            case ANDB -> andb(lhs, rhs);
-            default -> "";
-        };
     }
 
     private String lth(Element lhs, Element rhs) {
@@ -301,27 +314,36 @@ public class InstructionBuilder {
         return code.toString();
     }
 
-    private String andb(Element lhs, Element rhs) {
+    private String build(GotoInstruction instruction) {
+        return JasminInstruction.goto_(instruction.getLabel());
+    }
+
+    private String ifCondition(Instruction condition, String label) {
+        return build(condition) + JasminInstruction.ifne(label);
+    }
+
+    private String ifConditionBinary(BinaryOpInstruction condition, String label) {
         StringBuilder code = new StringBuilder();
-        String label1 = "ANDB_" + labelTracker.nextLabelNumber();
-        String label2 = "ANDB_" + labelTracker.nextLabelNumber();
+        Element lhs = condition.getLeftOperand();
+        Element rhs = condition.getRightOperand();
+        OperationType operationType = condition.getOperation().getOpType();
 
-        // if any side is 0, then result is false
-        code.append(load(lhs));
-        code.append("ifeq ").append(label1).append("\n");
-
-        code.append(load(rhs));
-        code.append("ifeq ").append(label1).append("\n");
-
-        // result is 1
-        code.append(JasminInstruction.iconst("1"));
-        code.append("goto ").append(label2).append("\n");
-
-        // result is 0
-        code.append(label1).append(":\n");
-        code.append(JasminInstruction.iconst("0"));
-
-        code.append(label2).append(":\n");
+        // < and >= are optimized for comparisons with 0 and to avoid extra gotos
+        if (operationType == OperationType.LTH || operationType == OperationType.GTE) {
+            String comparison = "";
+            code.append(load(lhs));
+            if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
+                comparison = operationType == OperationType.LTH ? JasminInstruction.iflt(label)
+                        : JasminInstruction.ifge(label);
+            } else {
+                code.append(load(rhs));
+                comparison = operationType == OperationType.LTH ? JasminInstruction.if_icmplt(label)
+                        : JasminInstruction.if_icmpge(label);
+            }
+            code.append(comparison);
+        } else {
+            code.append(ifCondition(condition, label));
+        }
 
         return code.toString();
     }
@@ -332,10 +354,13 @@ public class InstructionBuilder {
 
     private String build(CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
-        Element condition = ((SingleOpCondInstruction) instruction).getCondition().getSingleOperand();
-        code.append(load(condition));
-        code.append(JasminInstruction.ifne(instruction.getLabel()));
-        code.append("\n");
+        Instruction condition = instruction.getCondition();
+        String bodyLabel = instruction.getLabel();
+        if (condition.getInstType() == InstructionType.BINARYOPER) {
+            code.append(ifConditionBinary((BinaryOpInstruction) condition, bodyLabel));
+        } else {
+            code.append(ifCondition(condition, bodyLabel));
+        }
         return code.toString();
     }
 }
