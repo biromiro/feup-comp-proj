@@ -31,6 +31,14 @@ We implemented all required features, as well as extra features (3 simple optimi
 are described in more detail in the "PROS" section. We tested the code and made our own unit tests to help verify that our
 implementation is correct.
 
+As instructed in the assignment, the project can be compiled with:
+
+`gradle installDist`
+
+and run with:
+
+`comp2022-00 [-r=<num>] [-o] [-d] -i=<input_file.jmm>`
+
 ## SEMANTIC ANALYSIS
 
 For the semantic analysis phase, we have implemented two visitors: one to generate the symbol table and another to
