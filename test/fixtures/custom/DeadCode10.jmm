@@ -2,7 +2,7 @@ import ioPlus;
 
 class DeadCode {
     public static void main(String[] args) {
-        while (50 < 20) {
+        while (50 + 1 < 20) {
             ioPlus.printResult(777501);
         }
         ioPlus.printResult(777502);

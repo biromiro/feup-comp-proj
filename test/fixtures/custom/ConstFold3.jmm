@@ -1,0 +1,17 @@
+import ioPlus;
+class ConstFold {
+    public int fun2(int x) {
+        return x + 1;
+    }
+    public boolean fun(int x) {
+        return 5 + this.fun2(x) - (4 * 30 + 2*x - (25*8/5*x - (12 + 1))) < 1 * 2 * 3 * 4 * x;
+    }
+
+	public static void main(String[] args) {
+	    if (new ConstFold().fun(10)) {
+	        ioPlus.printResult(1);
+	    } else {
+	        ioPlus.printResult(0);
+	    }
+	}
+}

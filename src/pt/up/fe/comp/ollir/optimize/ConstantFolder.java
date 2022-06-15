@@ -36,8 +36,8 @@ public class ConstantFolder {
     }
 
     public void foldBinOpBool(JmmNode left, JmmNode right, JmmNode originalNode) {
-        boolean leftValue = Boolean.parseBoolean(left.get("val"));
-        boolean rightValue = Boolean.parseBoolean(right.get("val"));
+        boolean leftValue = left.get("val").equals("1");
+        boolean rightValue = right.get("val").equals("1");
         boolean result = switch (originalNode.get("op")) {
             case "&&" -> leftValue && rightValue;
             case "||" -> leftValue || rightValue;
@@ -45,7 +45,7 @@ public class ConstantFolder {
         };
 
         JmmNode newLiteral = new JmmNodeImpl(left.getKind());
-        newLiteral.put("val", String.valueOf(result));
+        newLiteral.put("val", result? "1" : "0");
         newLiteral.put("type", left.get("type"));
         newLiteral.put("isArray", "false");
         replaceNode(originalNode, newLiteral);

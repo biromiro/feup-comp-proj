@@ -1,0 +1,29 @@
+import ioPlus;
+class ConstFold {
+    public int fun() {
+        int a;
+        int b;
+        int c;
+        int d;
+        int e;
+
+        a = 1;
+        b = a + 2;
+        c = a + 3;
+        d = c + b;
+        c = d + c + c;
+        e = 2*a + 3*b + 4*c + 5*d + 6*c;
+
+        a = e - e;
+        d = 24 + d/7;
+        c = a*(d + c);
+        b = a - 25;
+        e = a + b + c + d;
+
+        return a + b + c + d + e;
+    }
+
+	public static void main(String[] args) {
+	    ioPlus.printResult(new ConstFold().fun());
+	}
+}
