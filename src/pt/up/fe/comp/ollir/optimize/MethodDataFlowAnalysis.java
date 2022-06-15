@@ -301,7 +301,7 @@ public class MethodDataFlowAnalysis {
         ArrayList<Instruction> copyInstructions = new ArrayList<>(instructions);
         for (Instruction instruction: copyInstructions) {
             int index = nodeOrder.indexOf(instruction);
-            instruction.show();
+
             if (instruction instanceof AssignInstruction assignInstruction) {
                 String name = getElementName(assignInstruction.getDest());
 

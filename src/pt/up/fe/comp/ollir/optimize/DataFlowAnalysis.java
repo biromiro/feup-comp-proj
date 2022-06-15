@@ -65,13 +65,7 @@ public class DataFlowAnalysis {
     public boolean eliminateDeadVars() {
         boolean hasDeadVars = false;
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
-            for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
-                instruction.show();
-            }
             hasDeadVars = methodFlow.eliminateDeadVars() || hasDeadVars;
-            for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
-                instruction.show();
-            }
         }
         return hasDeadVars;
     }
