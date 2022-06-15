@@ -314,7 +314,7 @@ public class CustomTestsOptimizations {
     @Test
     public void constProp5() {
         constFoldAndPropHelper("ConstProp5",
-                "(?s)iconst_5\\s+istore_\\d+.*(bipush|sipush|ldc) 6\\s+istore_\\d+.*iload_\\d+\\s+ireturn",
+                "iconst_5\\s+ireturn",
                 getResults(List.of(5)));
     }
 

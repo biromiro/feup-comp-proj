@@ -134,7 +134,7 @@ public class CustomTests {
     @Test
     public void complexExpressions6() {
         CpUtils.runJasmin(getJasminResult("ComplexExpressions6"), getResults(List.of(
-                4
+                43
         )));
     }
 
@@ -145,12 +145,7 @@ public class CustomTests {
         )));
     }
 
-    @Test
-    public void complexExpressions8() {
-        CpUtils.runJasmin(getJasminResult("ComplexExpressions8"), getResults(List.of(
-                43
-        )));
-    }
+
 
     @Test
     public void inheritance1() {

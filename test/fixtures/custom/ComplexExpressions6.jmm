@@ -1,15 +1,23 @@
 import ioPlus;
 class Obj {
-    public int[] getArray(int a) {
-        int[] arr;
-        arr = new int[a];
-        arr[0] = a * 2;
-        return arr;
+    public int t(int a, int b, int c, int d, int e, int f, int g, int h) {
+        return a + b + c + d + e + f + g + h;
+    }
+
+    public int toInt(boolean b) {
+        int result; if (b) result = 1; else { result = 0; } return result;
     }
 
     public static void main(String[] args) {
-        ioPlus.printResult(
-            new Obj().getArray(new Obj().getArray(new Obj().getArray(1)[0])[0]).length
-        );
+        ioPlus.printResult(new Obj().t(
+            1, // 1
+            5*4-3/2+1, // 20
+            new Obj().toInt(4 < 3), // 0
+            new Obj().toInt(true && true && 3 < 100 && false), // 0
+            new Obj().t(1,2,3,4,0,50,0-50,0), // 10
+            new int[10].length, // 10
+            new Obj().toInt(!(new int[10].length < 10)), // 1
+            new Obj().toInt(!!!!(4+5 - new Obj().toInt(!!(3*9 < (2+8)*3)) < 9 + 500/1000)) // 1
+        ));
     }
 }
