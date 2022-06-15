@@ -363,12 +363,46 @@ public class InstructionBuilder {
         return JasminInstruction.goto_(instruction.getLabel());
     }
 
+    private String ifCondition(Instruction condition, String label) {
+        return build(condition) + JasminInstruction.ifne(label);
+    }
+
+    private String ifConditionBinary(BinaryOpInstruction condition, String label) {
+        StringBuilder code = new StringBuilder();
+        Element lhs = condition.getLeftOperand();
+        Element rhs = condition.getRightOperand();
+        OperationType operationType = condition.getOperation().getOpType();
+
+        // < and >= are optimized for comparisons with 0 and to avoid extra gotos
+        if (operationType == OperationType.LTH || operationType == OperationType.GTE) {
+            String comparison = "";
+            code.append(load(lhs));
+            if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
+                comparison = operationType == OperationType.LTH ? JasminInstruction.iflt(label)
+                        : JasminInstruction.ifge(label);
+            } else {
+                code.append(load(rhs));
+                comparison = operationType == OperationType.LTH ? JasminInstruction.if_icmplt(label)
+                        : JasminInstruction.if_icmpge(label);
+            }
+            code.append(comparison);
+        } else {
+            code.append(ifCondition(condition, label));
+        }
+
+        return code.toString();
+    }
+
+
     private String build(CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
-        Element condition = ((SingleOpCondInstruction) instruction).getCondition().getSingleOperand();
-        code.append(load(condition));
-        code.append(JasminInstruction.ifne(instruction.getLabel()));
-        code.append("\n");
+        Instruction condition = instruction.getCondition();
+        String bodyLabel = instruction.getLabel();
+        if (condition.getInstType() == InstructionType.BINARYOPER) {
+            code.append(ifConditionBinary((BinaryOpInstruction) condition, bodyLabel));
+        } else {
+            code.append(ifCondition(condition, bodyLabel));
+        }
         return code.toString();
     }
 }

@@ -86,7 +86,8 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         JmmNode left = jmmNode.getJmmChild(0);
         JmmNode right = jmmNode.getJmmChild(1);
         String ret = visit(left, constantsMap);
-        ret = ret.equals("") ? visit(right, constantsMap) : ret;
+        String ret2 = visit(right, constantsMap);
+        ret = ret.equals("") ? ret2 : ret;
         ConstantFolder folder = new ConstantFolder();
 
         if (left.getKind().equals("IntegerLiteral") && right.getKind().equals("IntegerLiteral")) {
@@ -123,6 +124,23 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         ConstantFolder folder = new ConstantFolder();
         if (expression.getKind().equals("BooleanLiteral")) {
             folder.foldNotExpr(expression, jmmNode);
+            hasChanged = true;
+            return "changed";
+        }
+        if (expression.getKind().equals("BinaryOp")) {
+            String operator = expression.get("op");
+            switch (operator) {
+                case "<" -> expression.put("op", ">=");
+                case ">=" -> expression.put("op", "<");
+                // case "&&" -> expression.put("op", "||");
+                // case "||" -> expression.put("op", "&&");
+            }
+            ConstantFolder.replaceNode(jmmNode, expression);
+            hasChanged = true;
+            return "changed";
+        }
+        if (expression.getKind().equals("NotExpression")) {
+            ConstantFolder.replaceNode(jmmNode, expression.getJmmChild(0));
             hasChanged = true;
             return "changed";
         }
@@ -214,7 +232,7 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
                 JmmNode child = condition.getJmmChild(i);
                 child.setParent(condition);
             }
-        }
+        } else visit(condition, newConstantsMap);
         visit(body, newConstantsMap);
         fixScopedConstantsMap(constantsMap, newConstantsMap);
 

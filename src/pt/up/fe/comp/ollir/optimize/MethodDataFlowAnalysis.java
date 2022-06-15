@@ -265,13 +265,9 @@ public class MethodDataFlowAnalysis {
         boolean hasDeadVars = false;
         ArrayList<Instruction> instructions = method.getInstructions();
         ArrayList<Instruction> copyInstructions = new ArrayList<>(instructions);
-        System.out.println("ENTERED " + copyInstructions.size() + " instructions\n");
-        System.out.println("Node Order " + nodeOrder.size() + "\n");
         for (Instruction instruction: copyInstructions) {
             int index = nodeOrder.indexOf(instruction);
             instruction.show();
-            System.out.println("def: " + def.get(index));
-            System.out.println("out: " + out.get(index));
             if (instruction instanceof AssignInstruction assignInstruction) {
                 String name = null;
                 if (assignInstruction.getDest() instanceof Operand operand) {

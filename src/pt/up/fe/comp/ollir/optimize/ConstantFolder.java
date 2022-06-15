@@ -17,25 +17,16 @@ public class ConstantFolder {
     public void foldBinOpInt(JmmNode left, JmmNode right, JmmNode originalNode) {
         int leftValue = Integer.parseInt(left.get("val"));
         int rightValue = Integer.parseInt(right.get("val"));
-        int result = 0;
-        switch (originalNode.get("op")) {
-            case "+":
-                result = leftValue + rightValue;
-                break;
-            case "-":
-                result = leftValue - rightValue;
-                break;
-            case "*":
-                result = leftValue * rightValue;
-                break;
-            case "/":
-                result = leftValue / rightValue;
-                break;
-            case "<":
-                result = leftValue < rightValue ? 1 : 0;
-                break;
-        }
-        String kind = originalNode.get("op").equals("<") ? "BooleanLiteral" : "IntegerLiteral";
+        int result = switch (originalNode.get("op")) {
+            case "+" -> leftValue + rightValue;
+            case "-" -> leftValue - rightValue;
+            case "*" -> leftValue * rightValue;
+            case "/" -> leftValue / rightValue;
+            case "<" -> leftValue < rightValue ? 1 : 0;
+            case ">=" -> leftValue >= rightValue ? 1 : 0;
+            default -> throw new IllegalStateException("Unexpected value: " + originalNode.get("op"));
+        };
+        String kind = originalNode.get("op").matches("<|>=") ? "BooleanLiteral" : "IntegerLiteral";
         String type = kind.equals("IntegerLiteral") ? "int" : "boolean";
         JmmNode newLiteral = new JmmNodeImpl(kind);
         newLiteral.put("val", Integer.toString(result));
@@ -44,19 +35,20 @@ public class ConstantFolder {
         replaceNode(originalNode, newLiteral);
     }
 
-    public void foldBinOpBool(JmmNode left, JmmNode right, JmmNode jmmNode) {
+    public void foldBinOpBool(JmmNode left, JmmNode right, JmmNode originalNode) {
         boolean leftValue = Boolean.parseBoolean(left.get("val"));
         boolean rightValue = Boolean.parseBoolean(right.get("val"));
-        boolean result = false;
-        if ("&&".equals(jmmNode.get("op"))) {
-            result = leftValue && rightValue;
-        } else return;
+        boolean result = switch (originalNode.get("op")) {
+            case "&&" -> leftValue && rightValue;
+            case "||" -> leftValue || rightValue;
+            default -> throw new IllegalStateException("Unexpected value: " + originalNode.get("op"));
+        };
 
         JmmNode newLiteral = new JmmNodeImpl(left.getKind());
         newLiteral.put("val", String.valueOf(result));
         newLiteral.put("type", left.get("type"));
         newLiteral.put("isArray", "false");
-        replaceNode(jmmNode, newLiteral);
+        replaceNode(originalNode, newLiteral);
     }
 
     public void foldNotExpr(JmmNode expression, JmmNode jmmNode) {
