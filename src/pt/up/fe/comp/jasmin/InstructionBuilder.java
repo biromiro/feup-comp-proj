@@ -242,16 +242,16 @@ public class InstructionBuilder {
             BinaryOpInstruction expression = (BinaryOpInstruction) rhs;
             if (expression.getOperation().getOpType() == OperationType.ADD || expression.getOperation().getOpType() == OperationType.SUB) {
                 String sign = expression.getOperation().getOpType() == OperationType.ADD ? "" : "-";
-                // a = a + 1
+                int register =registerNum(lhs);
                 if (!expression.getLeftOperand().isLiteral() && expression.getRightOperand().isLiteral()) {
+                    // a = a + 1
                     if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
-                        int register = method.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
                         String literal = sign + ((LiteralElement) expression.getRightOperand()).getLiteral();
                         return JasminInstruction.iinc(register, literal);
                     }
                 } else if (expression.getLeftOperand().isLiteral() && !expression.getRightOperand().isLiteral()) {
+                    // a = 1 + a
                     if (((Operand) expression.getRightOperand()).getName().equals(((Operand) lhs).getName())) {
-                        int register = method.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
                         String literal = sign + ((LiteralElement) expression.getLeftOperand()).getLiteral();
                         return JasminInstruction.iinc(register, literal);
                     }
@@ -318,7 +318,7 @@ public class InstructionBuilder {
         //grammar also accepts && and <
 
         if (type == OperationType.LTH) {
-            code.append(booleanBinary(type, lhs, rhs));
+            code.append(lth(lhs, rhs));
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
@@ -326,13 +326,6 @@ public class InstructionBuilder {
         }
 
         return code.toString();
-    }
-
-    private String booleanBinary(OperationType type, Element lhs, Element rhs) {
-        return switch (type) {
-            case LTH -> lth(lhs, rhs);
-            default -> "";
-        };
     }
 
     private String lth(Element lhs, Element rhs) {
