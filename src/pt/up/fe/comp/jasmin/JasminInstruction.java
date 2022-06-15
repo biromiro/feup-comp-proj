@@ -132,13 +132,13 @@ public class JasminInstruction {
         return "goto " + label + '\n';
     }
 
+    public static String iinc(int register, String literal) {
+        return "iinc " + register + " " + literal + "\n";
+    }
+
     public static String ifne(String label) {
         limitTracker.updateStack(-1);
         return "ifne " + label + '\n';
-    }
-
-    public static String iinc(int register, String literal) {
-        return "iinc " + register + " " + literal + "\n";
     }
 
     public static String ifeq(String label) {
@@ -146,24 +146,22 @@ public class JasminInstruction {
     }
 
     public static String iflt(String label) {
+        limitTracker.updateStack(-1);
         return "iflt " + label + '\n';
     }
 
     public static String ifge(String label) {
+        limitTracker.updateStack(-1);
         return "ifge " + label + '\n';
     }
 
     public static String if_icmplt(String label) {
+        limitTracker.updateStack(-2);
         return "if_icmplt " + label + '\n';
     }
 
     public static String if_icmpge(String label) {
+        limitTracker.updateStack(-2);
         return "if_icmpge " + label + '\n';
     }
-
-    enum FieldInstruction {
-        GET,
-        PUT,
-    }
-
 }

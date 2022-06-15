@@ -210,7 +210,7 @@ public class InstructionBuilder {
             BinaryOpInstruction expression = (BinaryOpInstruction) rhs;
             if (expression.getOperation().getOpType() == OperationType.ADD || expression.getOperation().getOpType() == OperationType.SUB) {
                 String sign = expression.getOperation().getOpType() == OperationType.ADD ? "" : "-";
-                int register =registerNum(lhs);
+                int register = registerNum(lhs);
                 if (!expression.getLeftOperand().isLiteral() && expression.getRightOperand().isLiteral()) {
                     // a = a + 1
                     if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
@@ -299,18 +299,22 @@ public class InstructionBuilder {
     private String lth(Element lhs, Element rhs) {
         StringBuilder code = new StringBuilder();
         code.append(load(lhs));
-        if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
-            code.append("iflt ");
-        } else {
-            code.append(load(rhs));
-            code.append("if_icmplt ");
-        }
+
         String label1 = "LTH_" + labelTracker.nextLabelNumber();
         String label2 = "LTH_" + labelTracker.nextLabelNumber();
-        code.append(label1).append("\n")
-                .append(JasminInstruction.iconst("0")).append("goto ")
-                .append(label2).append("\n").append(label1).append(":\n")
-                .append(JasminInstruction.iconst("1")).append(label2).append(":\n");
+
+        if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
+            code.append(JasminInstruction.iflt(label1));
+        } else {
+            code.append(load(rhs));
+            code.append(JasminInstruction.if_icmplt(label1));
+        }
+
+        code.append(JasminInstruction.iconst("0"))
+                .append(JasminInstruction.goto_(label2))
+                .append(label1).append(":\n")
+                .append(JasminInstruction.iconst("1"))
+                .append(label2).append(":\n");
         return code.toString();
     }
 
@@ -346,10 +350,6 @@ public class InstructionBuilder {
         }
 
         return code.toString();
-    }
-
-    private String build(GotoInstruction instruction) {
-        return JasminInstruction.goto_(instruction.getLabel());
     }
 
     private String build(CondBranchInstruction instruction) {
