@@ -1,0 +1,14 @@
+import ioPlus;
+
+class EliminationOfUnnecessaryGotos {
+
+    public int fun(boolean b1, boolean b2) {
+        while (b1 && b2) {
+            ioPlus.printResult(1);
+        }
+        return 0;
+    }
+    public static void main(String[] args) {
+        new EliminationOfUnnecessaryGotos().fun(true, false);
+    }
+}

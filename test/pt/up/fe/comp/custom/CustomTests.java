@@ -170,13 +170,6 @@ public class CustomTests {
     }
 
     @Test
-    public void complexArrayAccess1() {
-        CpUtils.runJasmin(getJasminResult("ComplexArrayAccess1"), getResults(Arrays.asList(
-                1, 2, 3, 4, 5
-        )));
-    }
-
-    @Test
     public void ifElse1() {
         CpUtils.runJasmin(getJasminResult("IfElse1"), getResults(Arrays.asList(
                 1, 0, 1, 0, 2, 0, 2, 12, 2
