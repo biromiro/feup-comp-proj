@@ -2,11 +2,9 @@ import ioPlus;
 
 class DeadCode {
     public static void main(String[] args) {
-        if (false) {
+        while (50 < 20) {
             ioPlus.printResult(777501);
-        } else {
-            ioPlus.printResult(777502);
         }
-        ioPlus.printResult(777503);
+        ioPlus.printResult(777502);
     }
 }

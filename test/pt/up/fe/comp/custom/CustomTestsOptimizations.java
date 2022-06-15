@@ -199,4 +199,65 @@ public class CustomTestsOptimizations {
                 777502, 777504
         )));
     }
+
+    @Test
+    public void deadCode9() {
+        deadCodeHelper("DeadCode9", Arrays.asList("777501", "777503"), getResults(Arrays.asList(
+                777502, 777504
+        )));
+    }
+
+    @Test
+    public void deadCode10() {
+        deadCodeHelper("DeadCode10", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void deadCode11() {
+        deadCodeHelper("DeadCode11", Arrays.asList("777501", "777503", "777504", "777505"), getResults(Arrays.asList(
+                777502, 777506
+        )));
+    }
+
+    @Test
+    public void unusedVariable1() {
+        deadCodeHelper("UnusedVariable1", "777501", getResults(List.of()));
+    }
+
+    @Test
+    public void unusedVariable2() {
+        deadCodeHelper("UnusedVariable2", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void unusedVariable3() {
+        deadCodeHelper("UnusedVariable3", "777502", getResults(List.of(777501)));
+    }
+
+    @Test
+    public void unusedVariable4() {
+        deadCodeHelper("UnusedVariable3", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void unusedVariable5() {
+        deadCodeHelper("UnusedVariable5", "777502", getResults(List.of(777501)));
+    }
+
+    @Test
+    public void unusedVariable6() {
+        deadCodeHelper("UnusedVariable6", "777501", getResults(List.of(777502)));
+    }
+
+    @Test
+    public void unusedVariable7() {
+        deadCodeHelper("UnusedVariable7", "777505", getResults(Arrays.asList(
+                777504, 777506)));
+    }
+
+    @Test
+    public void unusedVariable8() {
+        deadCodeHelper("UnusedVariable8", "777505", getResults(List.of(777506)));
+    }
 }
+

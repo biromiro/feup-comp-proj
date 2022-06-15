@@ -1,0 +1,8 @@
+import ioPlus;
+
+class DeadCode {
+    public static void main(String[] args) {
+        int x;
+        x = 777501;
+    }
+}

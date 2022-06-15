@@ -219,4 +219,11 @@ public class CustomTests {
                 0, 1, 2, 3, 4, 50, 5, 16, 8, 4, 2
         )));
     }
+
+    @Test
+    public void while5() {
+        CpUtils.runJasmin(getJasminResult("While5"), getResults(Arrays.asList(
+                1, 1, 102, 103, 103, 103
+        )));
+    }
 }

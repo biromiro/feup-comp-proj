@@ -1,6 +1,6 @@
 import ioPlus;
 
-class EliminationOfUnnecessaryGotos {
+class DeadCode {
     public static void main(String[] args) {
         while (false) {
             ioPlus.printResult(777501);
