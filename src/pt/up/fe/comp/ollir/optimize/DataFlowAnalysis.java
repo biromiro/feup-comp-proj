@@ -49,7 +49,6 @@ public class DataFlowAnalysis {
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
             HashMap<String, Descriptor> varTable = methodFlow.getMethod().getVarTable();
             for (RegisterNode node: methodFlow.getInterferenceGraph().getLocalVars()) {
-                System.out.println("NODE: " + node.getName());
                 varTable.get(node.getName()).setVirtualReg(node.getRegister());
             }
             for (RegisterNode node: methodFlow.getInterferenceGraph().getParams()) {
@@ -59,10 +58,6 @@ public class DataFlowAnalysis {
             if (varTable.get("this") != null) {
                 varTable.get("this").setVirtualReg(0);
             }
-
-            for (Map.Entry<String, Descriptor> entry: varTable.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue().getVirtualReg());
-            }
         }
 
     }
@@ -70,12 +65,10 @@ public class DataFlowAnalysis {
     public boolean eliminateDeadVars() {
         boolean hasDeadVars = false;
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
-            System.out.println("------------------BEFORE--------------------------------\n");
             for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
                 instruction.show();
             }
             hasDeadVars = methodFlow.eliminateDeadVars() || hasDeadVars;
-            System.out.println("------------------AFTER--------------------------------\n");
             for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
                 instruction.show();
             }
