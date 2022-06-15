@@ -317,7 +317,7 @@ public class InstructionBuilder {
 
         //grammar also accepts && and <
 
-        if (type == OperationType.LTH || type == OperationType.ANDB) {
+        if (type == OperationType.LTH) {
             code.append(booleanBinary(type, lhs, rhs));
         } else {
             code.append(leftLoad);
@@ -331,7 +331,6 @@ public class InstructionBuilder {
     private String booleanBinary(OperationType type, Element lhs, Element rhs) {
         return switch (type) {
             case LTH -> lth(lhs, rhs);
-            case ANDB -> andb(lhs, rhs);
             default -> "";
         };
     }
@@ -353,32 +352,6 @@ public class InstructionBuilder {
                 .append(JasminInstruction.iconst("1")).append(label2).append(":\n");
         return code.toString();
     }
-
-    private String andb(Element lhs, Element rhs) {
-        StringBuilder code = new StringBuilder();
-        String label1 = "ANDB_" + labelTracker.nextLabelNumber();
-        String label2 = "ANDB_" + labelTracker.nextLabelNumber();
-
-        // if any side is 0, then result is false
-        code.append(load(lhs));
-        code.append("ifeq ").append(label1).append("\n");
-
-        code.append(load(rhs));
-        code.append("ifeq ").append(label1).append("\n");
-
-        // result is 1
-        code.append(JasminInstruction.iconst("1"));
-        code.append("goto ").append(label2).append("\n");
-
-        // result is 0
-        code.append(label1).append(":\n");
-        code.append(JasminInstruction.iconst("0"));
-
-        code.append(label2).append(":\n");
-
-        return code.toString();
-    }
-
 
     private String build(GotoInstruction instruction) {
         return JasminInstruction.goto_(instruction.getLabel());
