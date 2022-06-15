@@ -79,8 +79,12 @@ there was a semantic error, or because a method of another class was called. "#U
 if it results from a method of another class, it is now yet known and should be assumed to be correct).
 
 ## CODE GENERATION
-(describe how the code generation of your tool works and identify the possible problems your tool has regarding code generation.)
-
+Regarding code generation, our Jasmin generator unpacks the Ollir result and iterates through the class to be compiled.
+Field by field and method by method (`OllirToJasmin.java`), then instruction of method by instruction of method
+(`InstructionBuilder.java`), then step of instruction by step of instruction (`JasminInstruction.java`). This top-down
+structure is sturdily preserved and allows for a very modular code, easily optimizing instruction selection and tracking
+stack and locals limits (`LimitTracker.java`) and label codes (`LabelTracker.java`). Every component works effectively
+and produces optimal code using the .ollir input.
 
 ## PROS
 
@@ -121,7 +125,8 @@ This optimization tries to minimize the number of branch instructions in the cod
 is further optimized if it is known that at least one iteration will always run.
 
 ## CONS
-(Identify the most negative aspects of your tool)
+Everything was adequately implemented and extensively tested, so we consider we have a very solid product, both in how
+it's written and what it does.
 
 ----
 
