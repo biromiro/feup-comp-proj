@@ -4,6 +4,10 @@ import org.specs.comp.ollir.ClassUnit;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp.jmm.report.Report;
+
+import java.util.Collections;
+import java.util.List;
 
 public class MyJasminBackend implements JasminBackend {
     @Override
@@ -17,6 +21,6 @@ public class MyJasminBackend implements JasminBackend {
             System.out.println(jasminCode);
         }
 
-        return new JasminResult(jasminCode);
+        return new JasminResult(ollirResult, jasminCode, Collections.emptyList());
     }
 }

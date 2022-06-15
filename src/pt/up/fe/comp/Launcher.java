@@ -103,7 +103,8 @@ public class Launcher {
                 .reduce((a, b) -> a + "\n" + b);
 
         if (errors.isPresent()) {
-            throw new RuntimeException("Error while compiling:\n" + errors.get());
+            System.out.println("Error while compiling:\n" + errors.get());
+            System.exit(1);
         }
     }
 
@@ -137,10 +138,9 @@ public class Launcher {
         // Backend stage
         JasminResult jasminResult = new MyJasminBackend().toJasmin(lowLevelOptimizationResult);
         checkErrors(jasminResult.getReports());
-        //jasminResult.compile();
 
-        // Running
-        String runResult = jasminResult.run();
+        // Produce output
+        SpecsIo.copy(jasminResult.compile(), new File(jasminResult.getClassName() + ".class"));
     }
 
 }

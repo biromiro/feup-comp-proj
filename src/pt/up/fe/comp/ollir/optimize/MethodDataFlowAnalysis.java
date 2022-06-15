@@ -190,10 +190,8 @@ public class MethodDataFlowAnalysis {
                     continue;
                 }
                 for (int index = 0; index < nodeOrder.size(); index++) {
-                    Node node = nodeOrder.get(index);
                     if (def.get(index).contains(varX.getName())
                             && out.get(index).contains(varY.getName())) {
-                        // TODO point 4 in https://cse.sc.edu/~mgv/csce531sp20/notes/mogensen_Ch8_Slides_register-allocation.pdf
                         interferenceGraph.addEdge(varX, varY);
                     }
                 }
