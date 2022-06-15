@@ -247,17 +247,16 @@ public class InstructionBuilder {
                     if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
                         int register = method.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
                         String literal = sign + ((LiteralElement) expression.getRightOperand()).getLiteral();
-                        return "iinc " + register + " " + literal + "\n";
+                        return JasminInstruction.iinc(register, literal);
                     }
                 } else if (expression.getLeftOperand().isLiteral() && !expression.getRightOperand().isLiteral()) {
                     if (((Operand) expression.getRightOperand()).getName().equals(((Operand) lhs).getName())) {
                         int register = method.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
                         String literal = sign + ((LiteralElement) expression.getLeftOperand()).getLiteral();
-                        return "iinc " + register + " " + literal + "\n";
+                        return JasminInstruction.iinc(register, literal);
                     }
                 }
             }
-            System.out.println("INCREMENTING");
 
         }
         String rhsString = build(rhs);
