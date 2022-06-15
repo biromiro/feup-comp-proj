@@ -348,7 +348,7 @@ public class AnalyseVisitor extends PostorderJmmVisitor<SymbolTable, List<Report
             return reports;
         }
 
-        if (ARITHMETIC_OP.contains(jmmNode.get("op")) || LOGICAL_OP.contains(jmmNode.get("op"))) {
+        if (ARITHMETIC_OP.contains(jmmNode.get("op")) || LOGICAL_OP.contains(jmmNode.get("op")) || COMPARISON_OP.contains(jmmNode.get("op"))) {
             if (lhsType.isArray()) {
                 putUnknownType(jmmNode);
                 reports.add(ReportUtils.operatorCannotBeAppliedReport(jmmNode, jmmNode.get("op"), lhsType.print(), rhsType.print()));

@@ -1,0 +1,14 @@
+import ioPlus;
+class HelloWorld {
+    public static void main(String[] args) {
+
+        int[] arr;
+
+        arr = new int[10];
+        if (arr < arr) {
+            ioPlus.printHelloWorld();
+                //this = 9 + x - (2*y + 3*(4<10));
+        } else {}
+
+    }
+}
