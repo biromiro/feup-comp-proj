@@ -240,18 +240,19 @@ public class InstructionBuilder {
 
         if (rhs.getInstType() == InstructionType.BINARYOPER) {
             BinaryOpInstruction expression = (BinaryOpInstruction) rhs;
-            if (expression.getOperation().getOpType() == OperationType.ADD) {
+            if (expression.getOperation().getOpType() == OperationType.ADD || expression.getOperation().getOpType() == OperationType.SUB) {
+                String sign = expression.getOperation().getOpType() == OperationType.ADD ? "" : "-";
                 // a = a + 1
                 if (!expression.getLeftOperand().isLiteral() && expression.getRightOperand().isLiteral()) {
                     if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
                         int register = method.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
-                        String literal = ((LiteralElement) expression.getRightOperand()).getLiteral();
+                        String literal = sign + ((LiteralElement) expression.getRightOperand()).getLiteral();
                         return "iinc " + register + " " + literal + "\n";
                     }
                 } else if (expression.getLeftOperand().isLiteral() && !expression.getRightOperand().isLiteral()) {
                     if (((Operand) expression.getRightOperand()).getName().equals(((Operand) lhs).getName())) {
                         int register = method.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
-                        String literal = ((LiteralElement) expression.getLeftOperand()).getLiteral();
+                        String literal = sign + ((LiteralElement) expression.getLeftOperand()).getLiteral();
                         return "iinc " + register + " " + literal + "\n";
                     }
                 }
