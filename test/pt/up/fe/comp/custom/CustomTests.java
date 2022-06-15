@@ -215,4 +215,9 @@ public class CustomTests {
                 1, 1, 102, 103, 103, 103
         )));
     }
+
+    @Test
+    public void helloWorldFail() {
+        TestUtils.mustFail(getSemanticsResult("HelloWorld.fail").getReports());
+    }
 }

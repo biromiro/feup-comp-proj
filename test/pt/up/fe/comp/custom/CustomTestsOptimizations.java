@@ -339,6 +339,14 @@ public class CustomTestsOptimizations {
                 getResults(Arrays.asList(50, 50, 50, 4)));
     }
 
+
+    @Test
+    public void constProp9() {
+        constFoldAndPropHelper("ConstProp9",
+                "(?s)(bipush|sipush|ldc) 50\\s+invokestatic ioPlus/printResult\\(I\\)V.*(bipush|sipush|ldc) 50\\s+invokestatic ioPlus/printResult\\(I\\)V",
+                getResults(Arrays.asList(50)));
+    }
+
     @Test
     public void constFold1() {
         constFoldAndPropHelper("ConstFold1",
