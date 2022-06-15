@@ -315,6 +315,14 @@ public class MethodDataFlowAnalysis {
                             successor.addPred(predecessor);
                         }
                     }
+                    List<String> labels = method.getLabels(instruction);
+
+                    for (String label: labels) {
+                        method.getLabels().remove(label);
+                        for (Node successor: successors) {
+                            method.addLabel(label, (Instruction) successor);
+                        }
+                    }
 
                     instructions.remove(instruction);
                     hasDeadVars = true;

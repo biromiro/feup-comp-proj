@@ -59,6 +59,9 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     }
 
     private String defaultVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
+        if (simplifyWhile)
+            System.out.println("VISITING" + jmmNode.getKind());
+
         for (int i=0; i<jmmNode.getChildren().size(); i++) {
             JmmNode child = jmmNode.getJmmChild(i);
             visit(child, constantsMap);
@@ -210,6 +213,18 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
         return condition;
     }
 
+    private void getScopedConstantsMap(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
+        if (jmmNode.getKind().equals("Assignment")) {
+            JmmNode identifier = jmmNode.getJmmChild(0);
+            String name = identifier.get("name");
+            constantsMap.remove(name);
+        }
+
+        for (JmmNode jmmNodeChild: jmmNode.getChildren()) {
+            getScopedConstantsMap(jmmNodeChild, constantsMap);
+        }
+    }
+
     private String whileStatementVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         JmmNode condition = jmmNode.getJmmChild(0);
         JmmNode body = jmmNode.getJmmChild(1);
@@ -218,6 +233,7 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
 
         if (simplifyWhile) {
             JmmNode simplifiedCondition = getSimplifiedCondition(jmmNode, constantsMapCopy);
+
             ConstantFolder folder = new ConstantFolder();
 
             if (simplifiedCondition.getKind().equals("BooleanLiteral")) {
@@ -226,16 +242,18 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
                 } else {
                     jmmNode.put("dowhile", "1");
                 }
-                return "";
             }
 
             for (int i=0; i < condition.getChildren().size(); i++) {
                 JmmNode child = condition.getJmmChild(i);
                 child.setParent(condition);
             }
+
         } else visit(condition, newConstantsMap);
-        visit(body, newConstantsMap);
-        fixScopedConstantsMap(constantsMap, newConstantsMap);
+
+        getScopedConstantsMap(body, constantsMapCopy);
+        visit(body, constantsMapCopy);
+        fixScopedConstantsMap(constantsMap, constantsMapCopy);
 
         return "";
     }

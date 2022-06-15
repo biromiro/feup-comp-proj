@@ -287,6 +287,8 @@ public class InstructionBuilder {
 
         if (type == OperationType.LTH) {
             code.append(lth(lhs, rhs));
+        } else if (type == OperationType.GTE) {
+            code.append(gte(lhs, rhs));
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
@@ -308,6 +310,28 @@ public class InstructionBuilder {
         } else {
             code.append(load(rhs));
             code.append(JasminInstruction.if_icmplt(label1));
+        }
+
+        code.append(JasminInstruction.iconst("0"))
+                .append(JasminInstruction.goto_(label2))
+                .append(label1).append(":\n")
+                .append(JasminInstruction.iconst("1"))
+                .append(label2).append(":\n");
+        return code.toString();
+    }
+
+    private String gte(Element lhs, Element rhs) {
+        StringBuilder code = new StringBuilder();
+        code.append(load(lhs));
+
+        String label1 = "GTE_" + labelTracker.nextLabelNumber();
+        String label2 = "GTE_" + labelTracker.nextLabelNumber();
+
+        if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
+            code.append(JasminInstruction.ifge(label1));
+        } else {
+            code.append(load(rhs));
+            code.append(JasminInstruction.if_icmpge(label1));
         }
 
         code.append(JasminInstruction.iconst("0"))

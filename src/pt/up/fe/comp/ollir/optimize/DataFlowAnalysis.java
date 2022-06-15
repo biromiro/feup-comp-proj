@@ -30,6 +30,12 @@ public class DataFlowAnalysis {
         }
     }
 
+    public void buildInterferenceGraph() {
+        for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
+            methodFlow.buildInterferenceGraph();
+        }
+    }
+
     public void colorGraph() {
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
             methodFlow.buildInterferenceGraph();
@@ -43,6 +49,7 @@ public class DataFlowAnalysis {
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
             HashMap<String, Descriptor> varTable = methodFlow.getMethod().getVarTable();
             for (RegisterNode node: methodFlow.getInterferenceGraph().getLocalVars()) {
+                System.out.println("NODE: " + node.getName());
                 varTable.get(node.getName()).setVirtualReg(node.getRegister());
             }
             for (RegisterNode node: methodFlow.getInterferenceGraph().getParams()) {
@@ -63,6 +70,10 @@ public class DataFlowAnalysis {
     public boolean eliminateDeadVars() {
         boolean hasDeadVars = false;
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
+            System.out.println("------------------BEFORE--------------------------------\n");
+            for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
+                instruction.show();
+            }
             hasDeadVars = methodFlow.eliminateDeadVars() || hasDeadVars;
             System.out.println("------------------AFTER--------------------------------\n");
             for (Instruction instruction: methodFlow.getMethod().getInstructions()) {
@@ -71,4 +82,5 @@ public class DataFlowAnalysis {
         }
         return hasDeadVars;
     }
+
 }

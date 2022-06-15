@@ -1,5 +1,6 @@
 package pt.up.fe.comp.ollir;
 
+import pt.up.fe.comp.NotExpression;
 import pt.up.fe.comp.analysis.AnalysisUtils;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
@@ -688,33 +689,57 @@ public class OllirGenerator extends AJmmVisitor<Action, String> {
             return "";
         }
         String endLoopLabel = getNextLabel(LabelType.ENDLOOP);
+        String oppositeOp = null;
+        Optional<String> op = conditionNode.getOptional("op");
+
+        if (conditionNode.getKind().equals("BinaryOp") && op.isPresent()) {
+            oppositeOp = switch (op.get()) {
+                case "<" -> ">=";
+                case ">=" -> "<";
+                default -> null;
+            };
+
+        }
+        if (oppositeOp != null) {
+            conditionNode.put("op", oppositeOp);
+            String condition = visit(conditionNode, new Action(ActionType.RET_VAL));
+            ollirCode.append("if (")
+                    .append(condition)
+                    .append(") goto ")
+                    .append(endLoopLabel)
+                    .append(";\n")
+                    .append(bodyLabel)
+                    .append(":\n");
+            conditionNode.put("op", op.get());
+        } else if (conditionNode.getKind().equals("NotExpression")) {
+            String condition = visit(conditionNode.getJmmChild(0), new Action(ActionType.RET_VAL));
+            ollirCode.append("if (")
+                    .append(condition)
+                    .append(") goto ")
+                    .append(endLoopLabel)
+                    .append(";\n")
+                    .append(bodyLabel)
+                    .append(":\n");
+        } else {
+            String conditionToNegate = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+            Type callType = AnalysisUtils.getType(conditionNode);
+
+            ollirCode.append("if (")
+                    .append("!.")
+                    .append(OllirUtils.getCode(callType))
+                    .append(" ")
+                    .append(conditionToNegate)
+                    .append(") goto ")
+                    .append(endLoopLabel)
+                    .append(";\n")
+                    .append(bodyLabel)
+                    .append(":\n");
+        }
 
 
-
-        String conditionToNegate = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
-        Type callType = AnalysisUtils.getType(conditionNode);
-        String temp =  getNextTemp(callType);
-
-        ollirCode.append(temp)
-                .append(" :=.")
-                .append(OllirUtils.getCode(callType))
-                .append(" ")
-                .append("!.")
-                .append(OllirUtils.getCode(callType))
-                .append(" ")
-                .append(conditionToNegate)
-                .append(";\n");
-
-        ollirCode.append("if (")
-                .append(temp)
-                .append(") goto ")
-                .append(endLoopLabel)
-                .append(";\n")
-                .append(bodyLabel)
-                .append(":\n");
 
         visit(bodyNode, action);
-        String condition = visit(conditionNode, new Action(ActionType.SAVE_TO_TMP));
+        String condition = visit(conditionNode, new Action(ActionType.RET_VAL));
 
         ollirCode.append("if (")
                 .append(condition)
