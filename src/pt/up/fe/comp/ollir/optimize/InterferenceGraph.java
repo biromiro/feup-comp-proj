@@ -5,12 +5,17 @@ import java.util.Set;
 
 public class InterferenceGraph {
 
-    private final Set<RegisterNode> nodes;
+    private final Set<RegisterNode> localVars;
+    private final Set<RegisterNode> params;
 
-    public InterferenceGraph(Set<String> nodes) {
-        this.nodes = new HashSet<>();
+    public InterferenceGraph(Set<String> nodes, Set<String> params) {
+        this.localVars = new HashSet<>();
+        this.params = new HashSet<>();
         for (String node: nodes) {
-            this.nodes.add(new RegisterNode(node));
+            this.localVars.add(new RegisterNode(node));
+        }
+        for (String node: params) {
+            this.params.add(new RegisterNode(node));
         }
     }
 
@@ -24,13 +29,17 @@ public class InterferenceGraph {
         r2.removeEdge(r1);
     }
 
-    public Set<RegisterNode> getNodes() {
-        return nodes;
+    public Set<RegisterNode> getLocalVars() {
+        return localVars;
+    }
+
+    public Set<RegisterNode> getParams() {
+        return params;
     }
 
     public int getVisibleNodesCount() {
         int count = 0;
-        for (RegisterNode node: nodes) {
+        for (RegisterNode node: localVars) {
             if (node.isVisible()) count++;
         }
         return count;
