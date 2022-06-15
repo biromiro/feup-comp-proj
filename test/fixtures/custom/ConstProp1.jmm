@@ -1,0 +1,13 @@
+class ConstProp {
+    public int foo(int factor){
+	  int a;
+	  int b;
+	  a = 10;
+	  b = a;
+	  a = this.foo(b) * factor;
+	  return a;
+	}
+	public static void main(String[] args) {
+	}
+
+}

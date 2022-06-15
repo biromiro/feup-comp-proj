@@ -1,0 +1,29 @@
+import ioPlus;
+class ConstProp {
+
+    public int f(int x) {
+        int a;
+        int b;
+        int c;
+        int d;
+        int e;
+
+        a = 5;
+        b = a;
+        c = a;
+        d = b;
+        e = d;
+
+        if (c < x && x < e) {
+            ioPlus.printResult(b);
+        } else {
+            ioPlus.printResult(a);
+        }
+        return 0;
+    }
+
+	public static void main(String[] args) {
+	    new ConstProp().f(5);
+	}
+
+}
