@@ -126,7 +126,7 @@ is further optimized if it is known that at least one iteration will always run.
 
 ## CONS
 Since everything was adequately implemented and extensively tested, we consider we have a very solid product, both in how
-it's written and what it does.
+it's written and what it does. As such, no cons are clear to us.
 
 ----
 
