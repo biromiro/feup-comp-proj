@@ -27,8 +27,6 @@ public class Optimizer implements JmmOptimization {
         constantPropagationVisitor = new ConstantPropagationVisitor(true);
         constantPropagationVisitor.visit(semanticsResult.getRootNode(), new HashMap<>());
 
-        System.out.println(semanticsResult.getRootNode().toTree());
-
         return semanticsResult;
     }
 

@@ -65,7 +65,6 @@ public class ConstantFolder {
 
     public void foldConstantWhile(JmmNode jmmNode) {
         JmmNode whileParent = jmmNode.getJmmParent();
-        System.out.println(whileParent.toTree());
         whileParent.removeJmmChild(jmmNode);
     }
 }

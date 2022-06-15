@@ -59,9 +59,6 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
     }
 
     private String defaultVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
-        if (simplifyWhile)
-            System.out.println("VISITING" + jmmNode.getKind());
-
         for (int i=0; i<jmmNode.getChildren().size(); i++) {
             JmmNode child = jmmNode.getJmmChild(i);
             visit(child, constantsMap);
