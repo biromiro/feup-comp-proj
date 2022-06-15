@@ -1,0 +1,18 @@
+import ioPlus;
+class ConstFold {
+    public int fun(int x) {
+        int y;
+        y = 2;
+
+        x = x + y;
+
+        y = 2 * y - 3;
+
+        x = 4 * y;
+        return y + x - 2;
+    }
+
+	public static void main(String[] args) {
+	    ioPlus.printResult(new ConstFold().fun(10));
+	}
+}

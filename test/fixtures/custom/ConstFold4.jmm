@@ -1,0 +1,14 @@
+import ioPlus;
+class ConstFold {
+    public boolean fun(boolean x) {
+        return !x && (!true && 5 < 10 && x);
+    }
+
+	public static void main(String[] args) {
+	    if (new ConstFold().fun(true)) {
+	        ioPlus.printResult(1);
+	    } else {
+	        ioPlus.printResult(0);
+	    }
+	}
+}

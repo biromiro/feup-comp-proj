@@ -352,4 +352,39 @@ public class CustomTestsOptimizations {
                 "iconst_1\\s+ireturn",
                 getResults(List.of(1)));
     }
+
+    @Test
+    public void constFold3() {
+        constFoldAndPropHelper("ConstFold3",
+                "(?s)(bipush|sipush|ldc) 120.*(bipush|sipush|ldc) 40.*(bipush|sipush|ldc) 13.*",
+                getResults(List.of(0)));
+    }
+
+    @Test
+    public void constFold4() {
+        constFoldAndPropHelper("ConstFold4",
+                "(?s)iconst_0\\s+iload_\\d+\\s+imul\\s+.*iload_\\d+\\s+imul",
+                getResults(List.of(0)));
+    }
+
+    @Test
+    public void constFold5() {
+        constFoldAndPropHelper("ConstFold5",
+                "(bipush|sipush|ldc) 15",
+                getResults(List.of(16)));
+    }
+
+    @Test
+    public void constFoldAndProp1() {
+        constFoldAndPropHelper("ConstFoldAndProp1",
+                ".limit stack \\d+\\s+.limit locals \\d+\\s+iconst_3\\s+ireturn",
+                getResults(List.of(3)));
+    }
+
+    @Test
+    public void constFoldAndProp2() {
+        constFoldAndPropHelper("ConstFoldAndProp2",
+                ".limit stack \\d+\\s+.limit locals \\d+\\s+iconst_0\\s+ireturn",
+                getResults(List.of(0)));
+    }
 }
