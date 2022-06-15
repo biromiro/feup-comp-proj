@@ -20,14 +20,11 @@ import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.specs.util.SpecsIo;
-import pt.up.fe.specs.util.SpecsStrings;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class CustomTestsOptimizations {
@@ -36,21 +33,12 @@ public class CustomTestsOptimizations {
         return TestUtils.backend(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"));
     }
 
-    static JmmSemanticsResult getSemanticsResult(String filename) {
-        return TestUtils.analyse(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"));
-    }
-
     static String getResults(List<Integer> results) {
         var sb = new StringBuilder();
         for (var r : results) {
             sb.append("Result: ").append(r).append("\n");
         }
         return sb.toString().trim();
-    }
-
-
-    static OllirResult getOllirResult(String filename) {
-        return TestUtils.optimize(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"));
     }
 
     static JasminResult getJasminResultOpt(String filename) {
@@ -116,17 +104,23 @@ public class CustomTestsOptimizations {
         deadCodeHelper(filename, List.of(word), expected);
     }
 
-    public void constPropHelper(String filename, String codeExpected, String expected) {
+    public void constFoldAndPropHelper(String filename, String codeExpected, String expected, boolean optDiff) {
         JasminResult original = getJasminResult(filename);
         JasminResult optimized = getJasminResultOpt(filename);
 
         CpUtils.runJasmin(optimized, expected);
 
-        CpUtils.assertNotEquals("Expected code to change with -o flag\n\nOriginal code:\n" + original.getJasminCode(),
-                original.getJasminCode(), optimized.getJasminCode(),
-                optimized);
+        if (optDiff) {
+            CpUtils.assertNotEquals("Expected code to change with -o flag\n\nOriginal code:\n" + original.getJasminCode(),
+                    original.getJasminCode(), optimized.getJasminCode(),
+                    optimized);
+        }
 
         CpUtils.matches(optimized, codeExpected);
+    }
+
+    public void constFoldAndPropHelper(String filename, String codeExpected, String expected) {
+        constFoldAndPropHelper(filename, codeExpected, expected, true);
     }
 
     @Test
@@ -150,7 +144,7 @@ public class CustomTestsOptimizations {
 
     @Test
     public void eliminationOfUnnecessaryGotos4() {
-        eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos4", 2, getResults(Arrays.asList(
+        eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos4.noDiff", 2, getResults(Arrays.asList(
                 0, 1
         )), false);
     }
@@ -286,21 +280,76 @@ public class CustomTestsOptimizations {
 
     @Test
     public void constProp1() {
-        constPropHelper("ConstProp1", "(bipush|sipush|ldc) 10\\s+invokevirtual ConstProp/foo(I)I", getResults(List.of()));
+        constFoldAndPropHelper("ConstProp1", "(bipush|sipush|ldc) 10\\s+invokevirtual ConstProp/foo\\(I\\)I", getResults(List.of()));
     }
 
     @Test
     public void constProp2() {
-        constPropHelper("ConstProp2",
+        constFoldAndPropHelper("ConstProp2",
                 "(?s)((iconst_5\\s+iload_\\d+)|(iload_\\d+\\s+iconst_5))\\s+if_icmplt\\s+.*((iconst_5\\s+iload_\\d+)|(iload_\\d+\\s+iconst_5))\\s+if_icmplt\\s+.*iconst_5\\s+invokestatic\\s+ioPlus/printResult\\(I\\)V\\s+.*iconst_5\\s+invokestatic\\s+ioPlus/printResult\\(I\\)V",
                 getResults(List.of(5)));
     }
 
     @Test
     public void constProp3() {
-        constPropHelper("ConstProp3", "iconst_5\\s+invokestatic ioPlus/printResult\\(I\\)V\\s+(bipush|sipush|ldc) 6\\s+invokestatic ioPlus/printResult\\(I\\)V", getResults(Arrays.asList(
+        constFoldAndPropHelper("ConstProp3", "iconst_5\\s+invokestatic ioPlus/printResult\\(I\\)V\\s+(bipush|sipush|ldc) 6\\s+invokestatic ioPlus/printResult\\(I\\)V", getResults(Arrays.asList(
                 5, 6
         )));
     }
-}
 
+    @Test
+    public void constProp4() {
+        constFoldAndPropHelper("ConstProp4.noDiff",
+                "(?s)iconst_5\\s+istore_\\d+.*(bipush|sipush|ldc) 6\\s+istore_\\d+.*iload_\\d+\\s+ireturn",
+                getResults(List.of(5)), false);
+    }
+
+    @Test
+    public void constProp5() {
+        constFoldAndPropHelper("ConstProp5",
+                "(?s)iconst_5\\s+istore_\\d+.*(bipush|sipush|ldc) 6\\s+istore_\\d+.*iload_\\d+\\s+ireturn",
+                getResults(List.of(5)));
+    }
+
+    @Test
+    public void constProp6() {
+        constFoldAndPropHelper("ConstProp6.noDiff",
+                "(bipush|sipush|ldc) 50\\s+istore_\\d+",
+                getResults(Arrays.asList(50, 1, 2, 4)), false);
+    }
+
+    @Test
+    public void constProp7() {
+        constFoldAndPropHelper("ConstProp7",
+                "(bipush|sipush|ldc) 50\\s+invokestatic ioPlus/printResult\\(I\\)V",
+                getResults(Arrays.asList(50, 50, 50, 50)));
+    }
+
+    @Test
+    public void constProp8() {
+        constFoldAndPropHelper("ConstProp8.noDiff",
+                "(bipush|sipush|ldc) 50\\s+istore_\\d+",
+                getResults(Arrays.asList(50, 50, 50, 4)));
+    }
+
+    @Test
+    public void constProp9() {
+        constFoldAndPropHelper("ConstProp9",
+                "(bipush|sipush|ldc) 500\\s+invokestatic ioPlus/printResult\\(I\\)V",
+                getResults(Arrays.asList(50, 50, 50, 500, 500)));
+    }
+
+    @Test
+    public void constFold1() {
+        constFoldAndPropHelper("ConstFold1",
+                "(bipush|sipush|ldc) 17\\s+ireturn",
+                getResults(List.of(17)));
+    }
+
+    @Test
+    public void constFold2() {
+        constFoldAndPropHelper("ConstFold2",
+                "iconst_1\\s+ireturn",
+                getResults(List.of(1)));
+    }
+}

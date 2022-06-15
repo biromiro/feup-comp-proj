@@ -1,0 +1,14 @@
+import ioPlus;
+class ConstProp {
+	public static void main(String[] args) {
+	    int i;
+	    int x;
+	    x = 50;
+	    i = 1;
+
+	    while (i < 10) {
+	        ioPlus.printResult(x);
+	        i = i * 2;
+	    }
+	}
+}

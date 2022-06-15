@@ -1,0 +1,18 @@
+import ioPlus;
+class ConstProp {
+
+    public int fun(boolean b) {
+        int x;
+        x = 5;
+
+        if (b) {
+            b = false;
+        } else {}
+
+        return x;
+    }
+
+	public static void main(String[] args) {
+	    ioPlus.printResult(new ConstProp().fun(false));
+	}
+}

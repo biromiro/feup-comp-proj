@@ -13,7 +13,7 @@ import java.util.Set;
 
 public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmNode>, String> {
     private boolean hasChanged = false;
-    private boolean simplifyWhile;
+    private final boolean simplifyWhile;
     public ConstantPropagationVisitor() {
         this(false);
     }
@@ -132,8 +132,9 @@ public class ConstantPropagationVisitor extends AJmmVisitor<HashMap<String, JmmN
             switch (operator) {
                 case "<" -> expression.put("op", ">=");
                 case ">=" -> expression.put("op", "<");
-                // case "&&" -> expression.put("op", "||");
-                // case "||" -> expression.put("op", "&&");
+                default -> {
+                    return binaryOpVisit(expression, constantsMap);
+                }
             }
             ConstantFolder.replaceNode(jmmNode, expression);
             hasChanged = true;
