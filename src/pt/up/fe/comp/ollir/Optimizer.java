@@ -56,16 +56,16 @@ public class Optimizer implements JmmOptimization {
                 .getOrDefault("optimize", "false")
                 .equals("true");
 
+        boolean registerAllocationFlag = !ollirResult
+                .getConfig()
+                .getOrDefault("registerAllocation", "-1")
+                .equals("-1");
+
         if (optimizeFlag) {
             do {
                 dataFlowAnalysis.calcInOut();
             } while (dataFlowAnalysis.eliminateDeadVars());
         }
-
-        boolean registerAllocationFlag = !ollirResult
-                .getConfig()
-                .getOrDefault("registerAllocation", "-1")
-                .equals("-1");
 
         if (registerAllocationFlag) {
             dataFlowAnalysis.calcInOut();

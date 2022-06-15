@@ -53,6 +53,13 @@ public class CustomTestsOptimizations {
         return TestUtils.backend(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"), config);
     }
 
+    static JasminResult getJasminResultOptBestReg(String filename) {
+        Map<String, String> config = new HashMap<>();
+        config.put("optimize", "true");
+        config.put("registerAllocation", "0");
+        return TestUtils.backend(SpecsIo.getResource("fixtures/custom/" + filename + ".jmm"), config);
+    }
+
     public void eliminationOfUnnecessaryGotosHelper(String filename, int maxIf, int maxGoto, String expected, boolean optDif) {
         JasminResult original = getJasminResult(filename);
         JasminResult optimized = getJasminResultOpt(filename);
@@ -65,7 +72,7 @@ public class CustomTestsOptimizations {
                     optimized);
         }
 
-        var ifOccurOpt = CpUtils.countOccurences(optimized, "if_");
+        var ifOccurOpt = CpUtils.countOccurences(optimized, "if");
         var gotoOccurOpt = CpUtils.countOccurences(optimized, "goto");
 
         CpUtils.assertEquals("Expected exactly " + maxIf + " if instruction", maxIf, ifOccurOpt, optimized);
@@ -83,7 +90,7 @@ public class CustomTestsOptimizations {
 
     public void deadCodeHelper(String filename, List<String> words, String expected) {
         JasminResult original = getJasminResult(filename);
-        JasminResult optimized = getJasminResultOpt(filename);
+        JasminResult optimized = getJasminResultOptBestReg(filename);
 
         if (expected != null) {
             CpUtils.runJasmin(optimized, expected);
@@ -106,7 +113,7 @@ public class CustomTestsOptimizations {
 
     public void constFoldAndPropHelper(String filename, String codeExpected, String expected, boolean optDiff) {
         JasminResult original = getJasminResult(filename);
-        JasminResult optimized = getJasminResultOpt(filename);
+        JasminResult optimized = getJasminResultOptBestReg(filename);
 
         CpUtils.runJasmin(optimized, expected);
 
@@ -163,7 +170,7 @@ public class CustomTestsOptimizations {
 
     @Test
     public void eliminationOfUnnecessaryGotos7() {
-        eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos7", 2, getResults(List.of()));
+        eliminationOfUnnecessaryGotosHelper("EliminationOfUnnecessaryGotos7.noDiff", 2, getResults(List.of()), false);
     }
 
     @Test
@@ -254,7 +261,7 @@ public class CustomTestsOptimizations {
 
     @Test
     public void unusedVariable4() {
-        deadCodeHelper("UnusedVariable3", "777501", getResults(List.of(777502)));
+        deadCodeHelper("UnusedVariable4", "777501", getResults(List.of(777502)));
     }
 
     @Test
@@ -307,7 +314,7 @@ public class CustomTestsOptimizations {
     @Test
     public void constProp5() {
         constFoldAndPropHelper("ConstProp5",
-                "(?s)iconst_5\\s+istore_\\d+.*(bipush|sipush|ldc) 6\\s+istore_\\d+.*iload_\\d+\\s+ireturn",
+                "iconst_5\\s+ireturn",
                 getResults(List.of(5)));
     }
 
@@ -321,8 +328,8 @@ public class CustomTestsOptimizations {
     @Test
     public void constProp7() {
         constFoldAndPropHelper("ConstProp7",
-                "(bipush|sipush|ldc) 50\\s+invokestatic ioPlus/printResult\\(I\\)V",
-                getResults(Arrays.asList(50, 50, 50, 50)));
+                "(bipush|sipush|ldc) 500\\s+invokestatic ioPlus/printResult\\(I\\)V",
+                getResults(Arrays.asList(50, 50, 50, 500, 500)));
     }
 
     @Test
@@ -332,16 +339,10 @@ public class CustomTestsOptimizations {
                 getResults(Arrays.asList(50, 50, 50, 4)));
     }
 
+
     @Test
     public void constProp9() {
         constFoldAndPropHelper("ConstProp9",
-                "(bipush|sipush|ldc) 500\\s+invokestatic ioPlus/printResult\\(I\\)V",
-                getResults(Arrays.asList(50, 50, 50, 500, 500)));
-    }
-
-    @Test
-    public void constProp10() {
-        constFoldAndPropHelper("ConstProp10",
                 "(?s)(bipush|sipush|ldc) 50\\s+invokestatic ioPlus/printResult\\(I\\)V.*(bipush|sipush|ldc) 50\\s+invokestatic ioPlus/printResult\\(I\\)V",
                 getResults(Arrays.asList(50)));
     }

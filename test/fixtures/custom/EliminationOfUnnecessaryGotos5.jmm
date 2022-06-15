@@ -12,9 +12,6 @@ class EliminationOfUnnecessaryGotos {
              k = 0;
              while (j < 5) {
                  while (k < i) {
-                     while (false) {
-                         ioPlus.printHelloWorld();
-                     }
                      ioPlus.printResult(k);
                     k = k + 1;
                  }

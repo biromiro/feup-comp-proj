@@ -1,18 +1,20 @@
 import ioPlus;
 class ConstProp {
-	public static void main(String[] args) {
-	    int i;
-	    int x;
-	    i = 1;
-	    x = 50;
 
-	    while (i < 10) {
-	        ioPlus.printResult(x);
-	        if (3 < i && i < 8) {
-	            x = 500;
-	            ioPlus.printResult(x);
-	        } else {}
-	        i = i * 2;
-	    }
+    public int fun(int i) {
+        int x;
+        x = 50;
+
+        if (i < 10) {
+            ioPlus.printResult(x);
+        } else {
+            ioPlus.printResult(x);
+        }
+
+        return 0;
+    }
+
+	public static void main(String[] args) {
+	    new ConstProp().fun(1);
 	}
 }
