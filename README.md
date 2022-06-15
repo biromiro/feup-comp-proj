@@ -125,7 +125,7 @@ This optimization tries to minimize the number of branch instructions in the cod
 is further optimized if it is known that at least one iteration will always run.
 
 ## CONS
-Everything was adequately implemented and extensively tested, so we consider we have a very solid product, both in how
+Since everything was adequately implemented and extensively tested, we consider we have a very solid product, both in how
 it's written and what it does.
 
 ----
