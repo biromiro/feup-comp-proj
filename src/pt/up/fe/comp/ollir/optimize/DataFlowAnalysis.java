@@ -42,8 +42,19 @@ public class DataFlowAnalysis {
     public void allocateRegisters() {
         for (MethodDataFlowAnalysis methodFlow: methodFlowList) {
             HashMap<String, Descriptor> varTable = methodFlow.getMethod().getVarTable();
-            for (RegisterNode node: methodFlow.getInterferenceGraph().getNodes()) {
+            for (RegisterNode node: methodFlow.getInterferenceGraph().getLocalVars()) {
                 varTable.get(node.getName()).setVirtualReg(node.getRegister());
+            }
+            for (RegisterNode node: methodFlow.getInterferenceGraph().getParams()) {
+                varTable.get(node.getName()).setVirtualReg(node.getRegister());
+            }
+
+            if (varTable.get("this") != null) {
+                varTable.get("this").setVirtualReg(0);
+            }
+
+            for (Map.Entry<String, Descriptor> entry: varTable.entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue().getVirtualReg());
             }
         }
 

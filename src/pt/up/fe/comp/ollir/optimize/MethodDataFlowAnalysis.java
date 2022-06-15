@@ -181,11 +181,38 @@ public class MethodDataFlowAnalysis {
         }
     }
 
-    public void buildInterferenceGraph() {
-        interferenceGraph = new InterferenceGraph(method.getVarTable().keySet());
+    private String getElementName(Element element) {
+        if (element instanceof Operand operand) {
+            return operand.getName();
+        }
+        return null;
+    }
 
-        for (RegisterNode varX: interferenceGraph.getNodes()) {
-            for (RegisterNode varY: interferenceGraph.getNodes()) {
+    private List<String> getParamNames() {
+        List<String> names = new ArrayList<>();
+        List<Element> parameters = method.getParams();
+        for (Element element: parameters) {
+            names.add(getElementName(element));
+        }
+        return names;
+    }
+
+    public void buildInterferenceGraph() {
+        Set<String> variables = new HashSet<>();
+        Set<String> params = new HashSet<>();
+
+        for (String variable: method.getVarTable().keySet()) {
+            if (getParamNames().contains(variable)) {
+                params.add(variable);
+            } else if (!variable.equals("this")) {
+                variables.add(variable);
+            }
+        }
+
+        interferenceGraph = new InterferenceGraph(variables, params);
+
+        for (RegisterNode varX: interferenceGraph.getLocalVars()) {
+            for (RegisterNode varY: interferenceGraph.getLocalVars()) {
                 if (varX.equals(varY)) {
                     continue;
                 }
@@ -202,8 +229,9 @@ public class MethodDataFlowAnalysis {
     public void colorInterferenceGraph(int maxK) {
         Stack<RegisterNode> stack = new Stack<>();
         int k = 0;
+
         while (interferenceGraph.getVisibleNodesCount() > 0) {
-            for (RegisterNode node: interferenceGraph.getNodes()) {
+            for (RegisterNode node: interferenceGraph.getLocalVars()) {
                 if (!node.isVisible()) continue;
                 int degree = node.countVisibleNeighbors();
                 if (degree < k) {
@@ -227,10 +255,10 @@ public class MethodDataFlowAnalysis {
                     " At least " + k + " registers are needed but " + maxK + " were requested.");
 
         }
-
+        int startReg = 1 + interferenceGraph.getParams().size();
         while (!stack.empty()) {
             RegisterNode node = stack.pop();
-            for (int reg = 1; reg <= k; reg++) {
+            for (int reg = startReg; reg <= k + startReg; reg++) {
                 if (node.edgeFreeRegister(reg)) {
                     node.setRegister(reg);
                     node.setVisible();
@@ -249,6 +277,13 @@ public class MethodDataFlowAnalysis {
                 throw new RuntimeException("Unexpected error. Register allocation failed.");
             }
         }
+
+        int reg = 1;
+        for (RegisterNode node: interferenceGraph.getParams()) {
+            node.setRegister(reg++);
+        }
+
+
     }
 
     public InterferenceGraph getInterferenceGraph() {
@@ -259,6 +294,7 @@ public class MethodDataFlowAnalysis {
         return method;
     }
 
+
     public boolean eliminateDeadVars() {
         boolean hasDeadVars = false;
         ArrayList<Instruction> instructions = method.getInstructions();
@@ -267,14 +303,8 @@ public class MethodDataFlowAnalysis {
             int index = nodeOrder.indexOf(instruction);
             instruction.show();
             if (instruction instanceof AssignInstruction assignInstruction) {
-                String name = null;
-                if (assignInstruction.getDest() instanceof Operand operand) {
-                    name = operand.getName();
-                }
-                else if (assignInstruction.getDest() instanceof ArrayOperand operand) {
-                    name = operand.getName();
+                String name = getElementName(assignInstruction.getDest());
 
-                }
                 if (name != null && def.get(index).contains(name) && !out.get(index).contains(name)) {
                     List<Node> predecessors = instruction.getPredecessors();
                     List<Node> successors = instruction.getSuccessors();

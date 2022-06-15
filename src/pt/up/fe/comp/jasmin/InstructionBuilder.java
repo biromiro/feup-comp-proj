@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 public class InstructionBuilder {
     private final Method method;
-
     private final LabelTracker labelTracker;
 
     public InstructionBuilder(Method method, LabelTracker labelTracker){
@@ -50,11 +49,11 @@ public class InstructionBuilder {
     }
 
     private String loadArray(Element element) {
-        return getArray(element) + "iaload\n";
+        return getArray(element) + JasminInstruction.iaload();
     }
 
     private String storeArray(Element element, String rhs) {
-        return getArray(element) + rhs + "iastore\n";
+        return getArray(element) + rhs + JasminInstruction.iastore();
     }
 
     private String loadParameters(ArrayList<Element> parameters) {
@@ -108,34 +107,22 @@ public class InstructionBuilder {
 
     private String store(Element lhs, String rhs) {
         ElementType type = lhs.getType().getTypeOfElement();
-        int register = registerNum(lhs);
 
         if (type == ElementType.INT32 || type == ElementType.STRING || type == ElementType.BOOLEAN) {
             ElementType variableType = lookup(lhs).getVarType().getTypeOfElement();
             if (variableType == ElementType.ARRAYREF) {
                 return storeArray(lhs, rhs);
             }
-            return rhs + JasminInstruction.istore(register);
+            return rhs + JasminInstruction.istore(registerNum(lhs));
         } else if (type == ElementType.OBJECTREF || type == ElementType.THIS || type == ElementType.ARRAYREF) {
-            return rhs + JasminInstruction.astore(register);
+            return rhs + JasminInstruction.astore(registerNum(lhs));
         }
 
         return "";
     }
 
-    private String arithmetic(OperationType type) {
-        return switch (type) {
-            case ADD -> "iadd\n";
-            case SUB -> "isub\n";
-            case MUL, ANDB -> "imul\n";
-            case DIV -> "idiv\n";
-            case OR -> "ior\n";
-            default -> "";
-        };
-    }
-
     private String arraylength(CallInstruction instruction) {
-        return load(instruction.getFirstArg()) + "arraylength\n";
+        return load(instruction.getFirstArg()) + JasminInstruction.arraylength();
     }
 
     private String newCall(CallInstruction instruction) {
@@ -145,55 +132,37 @@ public class InstructionBuilder {
             String returnType = ((ClassType) instruction.getReturnType()).getName();
             code.append(newObject(returnType));
         } else {
-            String load = load(instruction.getListOfOperands().get(0));
-            code.append(newArray(load));
+            code.append(load(instruction.getListOfOperands().get(0)));
+            code.append(JasminInstruction.newarray());
         }
         return code.toString();
     }
 
     private String newObject(String className) {
-        return JasminInstruction.new_(getFullyQualifiedName(className)) + "dup\n";
+        return JasminInstruction.new_(getFullyQualifiedName(className)) + JasminInstruction.dup();
     }
 
-    private String newArray(String load) {
-        return load + "newarray int\n";
-    }
-
-    private String invokestatic(CallInstruction instruction) {
+    private String invoke(CallInstruction instruction) {
         StringBuilder code = new StringBuilder();
+
+        CallType callType = instruction.getInvocationType();
+
+        if (callType != CallType.invokestatic) {
+            code.append(load(instruction.getFirstArg()));
+        }
         ArrayList<Element> parameters = instruction.getListOfOperands();
         code.append(loadParameters(parameters));
-        code.append("invokestatic ");
 
-        String methodClass = getFullyQualifiedName(((Operand) instruction.getFirstArg()).getName());
+        String className;
+        if (instruction.getInvocationType() != CallType.invokestatic) {
+            className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
+        } else {
+            className = getFullyQualifiedName(((Operand) instruction.getFirstArg()).getName());
+        }
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
         Type returnType = instruction.getReturnType();
 
-        code.append(methodClass).append("/")
-                .append(methodName)
-                .append(argumentTypes(parameters))
-                .append(getJasminType(returnType))
-                .append("\n");
-
-        return code.toString();
-    }
-
-    private String invokenonstatic(CallInstruction instruction) {
-        StringBuilder code = new StringBuilder();
-        ArrayList<Element> parameters = instruction.getListOfOperands();
-        code.append(load(instruction.getFirstArg()));
-        code.append(loadParameters(parameters));
-
-        String className = getFullyQualifiedName(((ClassType) instruction.getFirstArg().getType()).getName());
-        String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        Type returnType = instruction.getReturnType();
-
-        code.append(instruction.getInvocationType().toString()).append(" ")
-                .append(className).append("/")
-                .append(methodName)
-                .append(argumentTypes(parameters))
-                .append(getJasminType(returnType))
-                .append("\n");
+        code.append(JasminInstruction.invoke(callType, className, methodName, argumentTypes(parameters), parameters.size(), getJasminType(returnType)));
 
         return code.toString();
     }
@@ -211,8 +180,7 @@ public class InstructionBuilder {
         return switch (instruction.getInvocationType()) {
             case arraylength -> arraylength(instruction);
             case NEW -> newCall(instruction);
-            case invokestatic -> invokestatic(instruction);
-            case invokespecial, invokevirtual -> invokenonstatic(instruction);
+            case invokestatic, invokevirtual, invokespecial -> invoke(instruction);
             default -> throw new NotImplementedException(instruction.getInvocationType());
         };
     }
@@ -242,7 +210,7 @@ public class InstructionBuilder {
             BinaryOpInstruction expression = (BinaryOpInstruction) rhs;
             if (expression.getOperation().getOpType() == OperationType.ADD || expression.getOperation().getOpType() == OperationType.SUB) {
                 String sign = expression.getOperation().getOpType() == OperationType.ADD ? "" : "-";
-                int register =registerNum(lhs);
+                int register = registerNum(lhs);
                 if (!expression.getLeftOperand().isLiteral() && expression.getRightOperand().isLiteral()) {
                     // a = a + 1
                     if (((Operand) expression.getLeftOperand()).getName().equals(((Operand) lhs).getName())) {
@@ -300,7 +268,7 @@ public class InstructionBuilder {
         if (operation.getOpType() == OperationType.NOTB) {
             code.append(JasminInstruction.iconst("1"));
             code.append(load(element));
-            code.append("isub\n");
+            code.append(JasminInstruction.arithmetic(OperationType.SUB));
         }
 
         return code.toString();
@@ -322,7 +290,7 @@ public class InstructionBuilder {
         } else {
             code.append(leftLoad);
             code.append(rightLoad);
-            code.append(arithmetic(type));
+            code.append(JasminInstruction.arithmetic(type));
         }
 
         return code.toString();
@@ -331,18 +299,22 @@ public class InstructionBuilder {
     private String lth(Element lhs, Element rhs) {
         StringBuilder code = new StringBuilder();
         code.append(load(lhs));
-        if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
-            code.append("iflt ");
-        } else {
-            code.append(load(rhs));
-            code.append("if_icmplt ");
-        }
+
         String label1 = "LTH_" + labelTracker.nextLabelNumber();
         String label2 = "LTH_" + labelTracker.nextLabelNumber();
-        code.append(label1).append("\n")
-                .append(JasminInstruction.iconst("0")).append("goto ")
-                .append(label2).append("\n").append(label1).append(":\n")
-                .append(JasminInstruction.iconst("1")).append(label2).append(":\n");
+
+        if (rhs.isLiteral() && ((LiteralElement) rhs).getLiteral().equals("0")) {
+            code.append(JasminInstruction.iflt(label1));
+        } else {
+            code.append(load(rhs));
+            code.append(JasminInstruction.if_icmplt(label1));
+        }
+
+        code.append(JasminInstruction.iconst("0"))
+                .append(JasminInstruction.goto_(label2))
+                .append(label1).append(":\n")
+                .append(JasminInstruction.iconst("1"))
+                .append(label2).append(":\n");
         return code.toString();
     }
 
@@ -379,7 +351,6 @@ public class InstructionBuilder {
 
         return code.toString();
     }
-
 
     private String build(CondBranchInstruction instruction) {
         StringBuilder code = new StringBuilder();
