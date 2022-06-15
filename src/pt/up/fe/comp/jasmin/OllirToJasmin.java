@@ -120,7 +120,10 @@ public class OllirToJasmin {
         StringBuilder body = new StringBuilder();
 
         InstructionBuilder builder = new InstructionBuilder(method, labelTracker);
-        JasminInstruction.stackLimit.reset();
+        JasminInstruction.limitTracker.reset();
+
+        // At least will need "this" + params
+        JasminInstruction.limitTracker.registersUntil(method.getParams().size() + 1);
 
         HashMap<String, Instruction> labels = method.getLabels();
 
@@ -144,8 +147,8 @@ public class OllirToJasmin {
         }
 
         // Stack and locals limits
-        code.append(".limit stack ").append(JasminInstruction.stackLimit.size()).append("\n");
-        code.append(".limit locals ").append(method.getVarTable().size() + 1).append("\n");
+        code.append(".limit stack ").append(JasminInstruction.limitTracker.stackLimit()).append("\n");
+        code.append(".limit locals ").append(JasminInstruction.limitTracker.localsLimit()).append("\n");
         code.append(body);
 
         code.append(".end method\n");
